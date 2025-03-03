@@ -22,7 +22,9 @@ from flambda_app.openapi import api_schemas
 from flambda_app.openapi import spec, get_doc, generate_openapi_yml
 from flambda_app.services.healthcheck_manager import HealthCheckManager
 from flambda_app.services.product_manager import ProductManager
+from flambda_app.services.company_manager import CompanyManager
 from flambda_app.services.v1.product_service import ProductService as ProductServiceV1
+from flambda_app.services.v1.company_service import CompanyService as CompanyServiceV1
 
 # load directly by boot
 ENV = boot.get_environment()
@@ -647,6 +649,104 @@ def product_soft_update(uuid):
 
     return response.get_response(status_code)
 
+@APP.route(API_ROOT + '/v1/company', methods=['GET'])
+def company_list():
+    """
+    Product list route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+
+        ---
+        get:
+            summary: Product List
+            parameters:
+            - name: limit
+              in: query
+              description: "List limit"
+              required: false
+              schema:
+                type: int
+                example: 20
+            - name: offset
+              in: query
+              description: "List offset"
+              required: false
+              schema:
+                type: int
+                example: 0
+            - name: fields
+              in: query
+              description: "Filter fields with comma"
+              required: false
+              schema:
+                type: string
+                example:
+            - name: order_by
+              in: query
+              description: "Ordination of list"
+              required: false
+              schema:
+                type: string
+                enum:
+                 - "asc"
+                 - "desc"
+            - name: sort_by
+              in: query
+              description: "Sorting of the list"
+              required: false
+              schema:
+                type: string
+                example: id
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: HateosCompanyListResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: CompanyListErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: CompanyListErrorResponseSchema
+        """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyServiceV1(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = manager.list(request.to_dict())
+        response.set_data(data)
+        response.set_total(manager.count(request.to_dict()))
+
+        # hateos
+        response.links = None
+        set_hateos_meta(request, response)
+        # LOGGER.info(data)
+        # LOGGER.info(response.data)
+    except CustomException as err:
+        LOGGER.error(err)
+        error = ApiException(MessagesEnum.LIST_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
 
 # *************
 # doc
@@ -667,6 +767,12 @@ spec.path(view=product_soft_update,
           path="/v1/product/{uuid}", operations=get_doc(product_soft_update))
 spec.path(view=product_delete,
           path="/v1/product/{uuid}", operations=get_doc(product_delete))
+# *************
+# company
+# *************
+# spec.path(view=company_list,
+#           path="/v1/company", operations=get_doc(company_list))
+
 print_routes(APP, LOGGER)
 LOGGER.info(f'Running at {ENV}')
 
