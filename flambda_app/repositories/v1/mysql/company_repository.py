@@ -1,5 +1,5 @@
 """
-Mysql Product Repository Module for Flambda APP
+Mysql Company Repository Module for Flambda APP
 Version: 1.0.0
 """
 from datetime import datetime

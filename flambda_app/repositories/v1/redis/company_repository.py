@@ -1,5 +1,5 @@
 """
-Redis Product Repository Module for Flambda APP
+Redis Company Repository Module for Flambda APP
 Version: 1.0.0
 """
 import json
