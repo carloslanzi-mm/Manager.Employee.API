@@ -1,6 +1,8 @@
 version: "3.2"
 services:
   template-serverless-service-python:
+#    container_name: template-serverless-service-python
+
     build:
       context: .
       dockerfile: ./docker/python/Dockerfile
@@ -9,17 +11,14 @@ services:
     stdin_open: true  # <-- Habilita entrada interativa
     tty: true         # <-- Mantém o terminal ativo
     environment:
+      # Fake credentials for Localstack
       AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
       AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
       TEST_ENV: ${TEST_ENV}
-      DB_HOST: "mysql"
-      DB_PORT: 3306
-      DB: store
-      DB_USER: root
-      DB_PASSWORD: store
     depends_on:
       - "localstack"
       - "redis"
+      - "mysql"
     ports:
       - 5000:5000
     networks:
@@ -34,6 +33,15 @@ services:
       - 6379
     networks:
       - service-python-v1
+  mysql:
+    image: mysql:5.7.22
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: store
+      MYSQL_ROOT_PASSWORD: store
+    networks:
+      - service-python-v1
   localstack:
     image: localstack/localstack
     privileged: true
@@ -46,6 +54,7 @@ services:
       SERVICES: sqs,lambda,cloudwatch,s3
       DOCKER_HOST: unix:///var/run/docker.sock
       PORT_WEB_UI: 9070
+      #LAMBDA_EXECUTOR: docker # está dando erro via docker
       LAMBDA_EXECUTOR: local
       DEBUG: 1
       HOSTNAME_EXTERNAL: localstack
@@ -56,4 +65,4 @@ services:
       - /tmp/localstack-data:/var/lib/localstack
 networks:
   service-python-v1:
-    external: true
+    # external: true

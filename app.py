@@ -20,8 +20,12 @@ from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger, set_debug_mode
 from flambda_app.openapi import api_schemas
 from flambda_app.openapi import spec, get_doc, generate_openapi_yml
+from flambda_app.services.company_manager import CompanyManager
+from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
 from flambda_app.services.product_manager import ProductManager
+from flambda_app.services.v1.company_service import CompanyService
+from flambda_app.services.v1.employee_service import EmployeeService
 from flambda_app.services.v1.product_service import ProductService as ProductServiceV1
 
 # load directly by boot
@@ -49,7 +53,6 @@ API_ROOT = os.environ['API_ROOT'] if 'API_ROOT' in os.environ else ''
 API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
 
 LOGGER.info("API_ROOT_ENDPOINT: {}".format(API_ROOT_ENDPOINT))
-
 
 
 @APP.route(API_ROOT_ENDPOINT)
@@ -651,6 +654,760 @@ def product_soft_update(uuid):
 
 
 # *************
+# company
+# *************
+@APP.route(API_ROOT + '/v1/company', methods=['POST'])
+def company_create():
+    """
+    Company create route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        post:
+            summary: Company Create
+            requestBody:
+                description: 'Company to be created'
+                required: true
+                content:
+                    application/json:
+                        schema: CompanyCreateRequestSchema
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: CompanyCreateResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: CompanyCreateErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: CompanyCreateErrorResponseSchema
+    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.create(request.to_dict()))
+        # response.set_total(manager.count(request))
+
+        # hateos
+        # set_hateos_links(request, response, uuid)
+        # set_hateos_meta(request, response, uuid)
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.CREATE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route('/v1/company/<id>', methods=['PATCH'])
+def company_update(id):
+    """
+    Product update route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        put:
+            summary: Complete Product Update
+            parameters:
+            - in: path
+              name: uuid
+              description: "Product Id"
+              required: true
+              schema:
+                type: string
+                format: uuid
+                example: 4bcad46b-6978-488f-8153-1c49f8a45244
+            requestBody:
+                description: 'Product to be updated'
+                required: true
+                content:
+                    application/json:
+                        schema: ProductCompleteUpdateRequestSchema
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema: ProductUpdateResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductUpdateErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductUpdateErrorResponseSchema
+            """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.update(request.to_dict(), id))
+        # response.set_total(manager.count(request))
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.UPDATE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(API_ROOT + '/v1/company', methods=['GET'])
+def company_list():
+    """
+    Product list route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+
+        ---
+        get:
+            summary: Product List
+            parameters:
+            - name: limit
+              in: query
+              description: "List limit"
+              required: false
+              schema:
+                type: int
+                example: 20
+            - name: offset
+              in: query
+              description: "List offset"
+              required: false
+              schema:
+                type: int
+                example: 0
+            - name: fields
+              in: query
+              description: "Filter fields with comma"
+              required: false
+              schema:
+                type: string
+                example:
+            - name: order_by
+              in: query
+              description: "Ordination of list"
+              required: false
+              schema:
+                type: string
+                enum:
+                 - "asc"
+                 - "desc"
+            - name: sort_by
+              in: query
+              description: "Sorting of the list"
+              required: false
+              schema:
+                type: string
+                example: id
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: HateosProductListResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductListErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductListErrorResponseSchema
+        """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = manager.list(request.to_dict())
+        response.set_data(data)
+        response.set_total(manager.count(request.to_dict()))
+
+        # hateos
+        response.links = None
+        set_hateos_meta(request, response)
+        # LOGGER.info(data)
+        # LOGGER.info(response.data)
+    except CustomException as err:
+        LOGGER.error(err)
+        error = ApiException(MessagesEnum.LIST_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(API_ROOT + '/v1/company/<id>', methods=['GET'])
+def company_get(id):
+    """
+    Product get route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        get:
+            summary: Product Get
+            parameters:
+            - in: path
+              name: uuid
+              description: "Product Id"
+              required: true
+              schema:
+                type: string
+                format: uuid
+                example: 4bcad46b-6978-488f-8153-1c49f8a45244
+            - name: fields
+              in: query
+              description: "Filter fields with comma"
+              required: false
+              schema:
+                type: string
+                example:
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: HateosProductGetResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductGetErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductGetErrorResponseSchema
+    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.get(request.to_dict(), id))
+
+        # hateos
+        set_hateos_links(request, response, id)
+        set_hateos_meta(request, response, id)
+
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.FIND_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route('/v1/company/<id>', methods=['DELETE'])
+def company_delete(id):
+    """
+    Product delete route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+            ---
+            delete:
+                summary: Soft Product Delete
+                parameters:
+                - in: path
+                  name: uuid
+                  description: "Product Id"
+                  required: true
+                  schema:
+                    type: string
+                    format: uuid
+                    example: 4bcad46b-6978-488f-8153-1c49f8a45244
+                responses:
+                    200:
+                        description: Success response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteResponseSchema
+                    4xx:
+                        description: Error response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteErrorResponseSchema
+                    5xx:
+                        description: Service fail response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteErrorResponseSchema
+                    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = {"deleted": manager.delete(request.to_dict(), id)}
+        response.set_data(data)
+        # response.set_total(manager.count(request))
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.DELETE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+# *************
+# employee
+# *************
+@APP.route(API_ROOT + '/v1/employee', methods=['POST'])
+def employee_create():
+    """
+    Company create route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        post:
+            summary: Company Create
+            requestBody:
+                description: 'Company to be created'
+                required: true
+                content:
+                    application/json:
+                        schema: CompanyCreateRequestSchema
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: CompanyCreateResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: CompanyCreateErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: CompanyCreateErrorResponseSchema
+    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.create(request.to_dict()))
+        # response.set_total(manager.count(request))
+
+        # hateos
+        # set_hateos_links(request, response, uuid)
+        # set_hateos_meta(request, response, uuid)
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.CREATE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route('/v1/employee/<id>', methods=['PATCH'])
+def employee_update(id):
+    """
+    Product update route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        put:
+            summary: Complete Product Update
+            parameters:
+            - in: path
+              name: uuid
+              description: "Product Id"
+              required: true
+              schema:
+                type: string
+                format: uuid
+                example: 4bcad46b-6978-488f-8153-1c49f8a45244
+            requestBody:
+                description: 'Product to be updated'
+                required: true
+                content:
+                    application/json:
+                        schema: ProductCompleteUpdateRequestSchema
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema: ProductUpdateResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductUpdateErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductUpdateErrorResponseSchema
+            """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.update(request.to_dict(), id))
+        # response.set_total(manager.count(request))
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.UPDATE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(API_ROOT + '/v1/employee', methods=['GET'])
+def employee_list():
+    """
+    Product list route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+
+        ---
+        get:
+            summary: Product List
+            parameters:
+            - name: limit
+              in: query
+              description: "List limit"
+              required: false
+              schema:
+                type: int
+                example: 20
+            - name: offset
+              in: query
+              description: "List offset"
+              required: false
+              schema:
+                type: int
+                example: 0
+            - name: fields
+              in: query
+              description: "Filter fields with comma"
+              required: false
+              schema:
+                type: string
+                example:
+            - name: order_by
+              in: query
+              description: "Ordination of list"
+              required: false
+              schema:
+                type: string
+                enum:
+                 - "asc"
+                 - "desc"
+            - name: sort_by
+              in: query
+              description: "Sorting of the list"
+              required: false
+              schema:
+                type: string
+                example: id
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: HateosProductListResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductListErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductListErrorResponseSchema
+        """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = manager.list(request.to_dict())
+        response.set_data(data)
+        response.set_total(manager.count(request.to_dict()))
+
+        # hateos
+        response.links = None
+        set_hateos_meta(request, response)
+        # LOGGER.info(data)
+        # LOGGER.info(response.data)
+    except CustomException as err:
+        LOGGER.error(err)
+        error = ApiException(MessagesEnum.LIST_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(API_ROOT + '/v1/employee/<id>', methods=['GET'])
+def employee_get(id):
+    """
+    Product get route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+        ---
+        get:
+            summary: Product Get
+            parameters:
+            - in: path
+              name: uuid
+              description: "Product Id"
+              required: true
+              schema:
+                type: string
+                format: uuid
+                example: 4bcad46b-6978-488f-8153-1c49f8a45244
+            - name: fields
+              in: query
+              description: "Filter fields with comma"
+              required: false
+              schema:
+                type: string
+                example:
+            responses:
+                200:
+                    description: Success response
+                    content:
+                        application/json:
+                            schema: HateosProductGetResponseSchema
+                4xx:
+                    description: Error response
+                    content:
+                        application/json:
+                            schema: ProductGetErrorResponseSchema
+                5xx:
+                    description: Service fail response
+                    content:
+                        application/json:
+                            schema: ProductGetErrorResponseSchema
+    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        response.set_data(manager.get(request.to_dict(), id))
+
+        # hateos
+        set_hateos_links(request, response, id)
+        set_hateos_meta(request, response, id)
+
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.FIND_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route('/v1/employee/<id>', methods=['DELETE'])
+def employee_delete(id):
+    """
+    Product delete route
+
+    :return Endpoint with RESTful pattern
+
+    # pylint: disable=line-too-long
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+
+    :rtype flask.Response
+            ---
+            delete:
+                summary: Soft Product Delete
+                parameters:
+                - in: path
+                  name: uuid
+                  description: "Product Id"
+                  required: true
+                  schema:
+                    type: string
+                    format: uuid
+                    example: 4bcad46b-6978-488f-8153-1c49f8a45244
+                responses:
+                    200:
+                        description: Success response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteResponseSchema
+                    4xx:
+                        description: Error response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteErrorResponseSchema
+                    5xx:
+                        description: Service fail response
+                        content:
+                            application/json:
+                                schema: ProductSoftDeleteErrorResponseSchema
+                    """
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(False)
+
+    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = {"deleted": manager.delete(request.to_dict(), id)}
+        response.set_data(data)
+        # response.set_total(manager.count(request))
+    except CustomException as error:
+        LOGGER.error(error)
+        if not isinstance(error, ValidationException):
+            error = ApiException(MessagesEnum.DELETE_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+# *************
 # doc
 # *************
 spec.path(view=alive, path=API_ROOT + "/alive", operations=get_doc(alive))
@@ -669,6 +1426,11 @@ spec.path(view=product_soft_update,
           path="/v1/product/{uuid}", operations=get_doc(product_soft_update))
 spec.path(view=product_delete,
           path="/v1/product/{uuid}", operations=get_doc(product_delete))
+
+# *************
+# company
+# *************
+
 print_routes(APP, LOGGER)
 LOGGER.info(f'Running at {ENV}')
 

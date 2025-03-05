@@ -3,12 +3,11 @@
 aws configure set region us-east-1 --profile default
 
 # define the environment variable indicating thar are running inside a container
-#!/bin/bash
 if [ -f /.dockerenv ]; then
-    echo "I'm inside matrix ;(";
+    echo "I'm inside matrix ;("
     export RUNNING_IN_CONTAINER=1
 else
-    echo "I'm living in real world!";
+    echo "I'm living in real world!"
     export RUNNING_IN_CONTAINER=0
 fi
 
