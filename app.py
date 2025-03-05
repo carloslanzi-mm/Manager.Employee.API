@@ -50,6 +50,7 @@ API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
 
 LOGGER.info("API_ROOT_ENDPOINT: {}".format(API_ROOT_ENDPOINT))
 
+
 @APP.route(API_ROOT_ENDPOINT)
 def index():
     """
