@@ -5,17 +5,17 @@ from unittest_data_provider import data_provider
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.request_control import Pagination, Order
 from flambda_app.logging import get_logger
-from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
-from flambda_app.vos.company import CompanyVO
+from flambda_app.repositories.v1.mysql.employee_respository import EmployeeRepository
+from flambda_app.vos.employee import EmployeeVO
 from tests.component.componenttestutils import BaseComponentTestCase
-from tests.unit.helpers.company_helper import get_company_sample
+from tests.unit.helpers.employee_helper import get_employee_sample
 from tests.unit.testutils import get_function_name
 
-def get_company():
-    company_dict = get_company_sample()
-    company_dict["id"] = None
-    company = CompanyVO(company_dict)
-    return (company,),
+def get_employee():
+    employee_dict = get_employee_sample()
+    employee_dict["id"] = None
+    employee = EmployeeVO(employee_dict)
+    return (employee,),
 
 def get_list_data():
     where = dict()
@@ -32,7 +32,7 @@ def get_list_data():
         ({'uuid': '123e4567-e89b-12d3-a456-426614174000'}, offset, limit, ['id', 'name'], sort_by, Order.DESC),
     )
 
-class CompanyRepositoryTestCase(BaseComponentTestCase):
+class EmployeeRepositoryTestCase(BaseComponentTestCase):
     
     @classmethod
     def setUpClass(cls):
@@ -49,36 +49,36 @@ class CompanyRepositoryTestCase(BaseComponentTestCase):
         self.connection.rollback = MagicMock()
         self.connection.close = MagicMock()
         
-        self.repository = CompanyRepository(logger=self.logger, mysql_connection=self.connection)
+        self.repository = EmployeeRepository(logger=self.logger, mysql_connection=self.connection)
         self.repository.debug = True
     
-    @data_provider(get_company)
-    def test_create(self, company: CompanyVO):
+    @data_provider(get_employee)
+    def test_create(self, employee: EmployeeVO):
         self.logger.info('Running test: %s', get_function_name(__name__))
         self.repository._execute = MagicMock(return_value=True)
         
-        result = self.repository.create(company)
+        result = self.repository.create(employee)
         self.assertTrue(result)
-        self.logger.info('Company created: {}'.format(company.id))
+        self.logger.info('Employee created: {}'.format(employee.id))
     
-    @data_provider(get_company)
-    def test_get(self, company: CompanyVO):
+    @data_provider(get_employee)
+    def test_get(self, employee: EmployeeVO):
         self.logger.info('Running test: %s', get_function_name(__name__))
-        company.uuid = "123e4567-e89b-12d3-a456-426614174000"
+        employee.uuid = "123e4567-e89b-12d3-a456-426614174000"
         self.repository._execute = MagicMock()
-        self.repository._execute().fetchone.return_value = company.to_dict()
+        self.repository._execute().fetchone.return_value = employee.to_dict()
         
-        response = self.repository.get(company.id)
+        response = self.repository.get(employee.id)
         self.assertIsNotNone(response)
         
-        response = self.repository.get(company.uuid, key='uuid')
+        response = self.repository.get(employee.uuid, key='uuid')
         self.assertIsNotNone(response)
     
     @data_provider(get_list_data)
     def test_list(self, where, offset, limit, fields, sort_by, order_by):
         self.logger.info('Running test: %s', get_function_name(__name__))
         self.repository._execute = MagicMock()
-        self.repository._execute().fetchall.return_value = [{"id": 1, "name": "Company A"}]
+        self.repository._execute().fetchall.return_value = [{"id": 1, "name": "Employee A"}]
         
         result = self.repository.list(where, offset, limit, fields, sort_by, order_by)
         self.assertIsNotNone(result)
@@ -95,20 +95,20 @@ class CompanyRepositoryTestCase(BaseComponentTestCase):
         self.assertIsInstance(result, int)
         self.assertEqual(result, 5)
     
-    @data_provider(get_company)
-    def test_update(self, company: CompanyVO):
+    @data_provider(get_employee)
+    def test_update(self, employee: EmployeeVO):
         self.logger.info('Running test: %s', get_function_name(__name__))
         self.repository._execute = MagicMock(return_value=True)
         
-        result = self.repository.update(company, company.id)
+        result = self.repository.update(employee, employee.id)
         self.assertTrue(result)
     
-    @data_provider(get_company)
-    def test_soft_delete(self, company: CompanyVO):
+    @data_provider(get_employee)
+    def test_soft_delete(self, employee: EmployeeVO):
         self.logger.info('Running test: %s', get_function_name(__name__))
         self.repository._execute = MagicMock(return_value=True)
         
-        result = self.repository.soft_delete(company.id)
+        result = self.repository.soft_delete(employee.id)
         self.assertTrue(result)
         
 if __name__ == '__main__':
