@@ -4,22 +4,23 @@ This module contains the handler method
 """
 import base64
 import os
+import socket
+
+import requests
 
 import boot
-from flambda_app import APP_NAME, APP_VERSION, http_helper
-from flambda_app import helper
+from flambda_app import APP_NAME, APP_VERSION, helper, http_helper
 from flambda_app.config import get_config
 from flambda_app.enums.messages import MessagesEnum
-from flambda_app.exceptions import ApiException, ValidationException, CustomException
+from flambda_app.exceptions import ApiException, CustomException, ValidationException
 from flambda_app.flambda import Flambda
 from flambda_app.helper import open_vendor_file, print_routes
-from flambda_app.http_helper import CUSTOM_DEFAULT_HEADERS, set_hateos_links, set_hateos_meta, \
-    get_favicon_32x32_data, get_favicon_16x16_data
+from flambda_app.http_helper import (CUSTOM_DEFAULT_HEADERS, get_favicon_16x16_data,
+                                     get_favicon_32x32_data, set_hateos_links, set_hateos_meta)
 from flambda_app.http_resources.request import ApiRequest
 from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger, set_debug_mode
-from flambda_app.openapi import api_schemas
-from flambda_app.openapi import spec, get_doc, generate_openapi_yml
+from flambda_app.openapi import api_schemas, generate_openapi_yml, get_doc, spec
 from flambda_app.services.company_manager import CompanyManager
 from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
@@ -1080,12 +1081,47 @@ def employee_create():
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.create(request.to_dict()))
-        # response.set_total(manager.count(request))
+        created_employee = manager.create(request.to_dict())
+        response.set_data(created_employee)
 
-        # hateos
-        # set_hateos_links(request, response, uuid)
-        # set_hateos_meta(request, response, uuid)
+        # Se o funcionário foi criado com sucesso, faz a chamada para /v1/turnstile
+        if created_employee and status_code == 200:
+            try:
+                import json
+                import time
+
+                import requests
+                from requests.adapters import HTTPAdapter
+                from urllib3.util import Retry
+
+                session = requests.Session()
+                retry_strategy = Retry(
+                    total=3,
+                    backoff_factor=0.5
+                )
+                adapter = HTTPAdapter(max_retries=retry_strategy)
+                session.mount("http://", adapter)
+
+                turnstile_data = {
+                    "uuid": created_employee.get("uuid"),
+                    "name": created_employee.get("name"),
+                    "is_active": False,
+                }
+
+                turnstile_url = os.getenv('TURNSTILE_API_URL', 'http://localhost:5000')
+                turnstile_response = session.post(
+                    f"{turnstile_url}/v1/turnstile",
+                    json=turnstile_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                )
+
+                if turnstile_response.status_code != 200:
+                    LOGGER.error(f"Erro ao criar registro na catraca: {turnstile_response.text}")
+
+            except Exception as turnstile_error:
+                LOGGER.error(f"Erro ao chamar endpoint da catraca: {str(turnstile_error)}")
+
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -1392,9 +1428,34 @@ def employee_delete(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
+        # Primeiro obtém os dados do funcionário antes de deletar
+        employee_data = manager.get(request.to_dict(), id)
+
+        # Deleta o funcionário
         data = {"deleted": manager.delete(request.to_dict(), id)}
         response.set_data(data)
-        # response.set_total(manager.count(request))
+
+        # Se o funcionário foi deletado com sucesso, deleta na catraca
+        if data["deleted"] and status_code == 200 and employee_data:
+            try:
+                import os
+
+                from python_request import python_request
+
+                turnstile_url = os.getenv('TURNSTILE_API_URL', 'http://localhost:5000')
+                turnstile_response = python_request(
+                    "DELETE",
+                    f"{turnstile_url}/v1/turnstile/{employee_data.get('uuid')}",
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                )
+
+                if turnstile_response.status_code != 200:
+                    LOGGER.error(f"Erro ao deletar registro na catraca: {turnstile_response.text}")
+
+            except Exception as turnstile_error:
+                LOGGER.error(f"Erro ao chamar endpoint da catraca: {str(turnstile_error)}")
+
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
