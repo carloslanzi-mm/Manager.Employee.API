@@ -3,8 +3,9 @@ import os
 import unittest
 import warnings
 
-from boot import reset, load_dot_env, load_env
-from flambda_app.config import reset as reset_config, get_config
+from boot import load_dot_env, load_env, reset
+from flambda_app.config import get_config
+from flambda_app.config import reset as reset_config
 from tests import ROOT_DIR
 from tests.component.helpers.aws.sqs_helper import SQSHelper
 from tests.component.helpers.database.mysql_helper import MySQLHelper
@@ -14,7 +15,7 @@ class BaseComponentTestCase(unittest.TestCase):
     """
     Classe base para testes de componentes
     """
-    SQS_LOCALSTACK = 'http://localhost:4566'
+    SQS_LOCALSTACK = 'http://localhost:4583'
     REDIS_LOCALSTACK = 'localhost'
     CONFIG = None
     LOGGER = None

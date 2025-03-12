@@ -15,15 +15,15 @@ queue_mock = Mock()
 queue_mock.attributes.return_value = {
     "ApproximateNumberOfMessages": "0", "ApproximateNumberOfMessagesDelayed": "0",
     "ApproximateNumberOfMessagesNotVisible": "0", "CreatedTimestamp": "1640732822.369549", "DelaySeconds": "1",
-    "LastModifiedTimestamp": "1640732822.369549", "MaximumMessageSize": "262144", "MessageRetentionPeriod": "345600",
+    "LastModifiedTimestamp": "1640732822.369549", "MaximumMessageSize": "262144", "MessageRetentionPeriod": "345830",
     "QueueArn": "arn:aws:sqs:us-east-1:000000000000:test-queue",
     "ReceiveMessageWaitTimeSeconds": "0", "VisibilityTimeout": "30"}
 # sqs.Queue.dead_letter_source_queuesCollectionManager(sqs.Queue(
-# url='http://localstack:4566/000000000000/test-queue'), sqs.Queue)
+# url='http://localstack:4583/000000000000/test-queue'), sqs.Queue)
 queue_mock.dead_letter_source_queues = Mock()
 queue_mock.meta.return_value = Mock()
-queue_mock.url.return_value = 'http://localstack:4566/000000000000/test-queue'
-queue_mock._url.return_value = 'http://localstack:4566/000000000000/test-queue'
+queue_mock.url.return_value = 'http://localstack:4583/000000000000/test-queue'
+queue_mock._url.return_value = 'http://localstack:4583/000000000000/test-queue'
 
 # methods
 queue_mock.add_permission.side_effect = lambda arg: None

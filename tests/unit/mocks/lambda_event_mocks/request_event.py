@@ -35,7 +35,7 @@ def create_aws_api_gateway_proxy_request_event(method="GET", path="/", headers=N
             "CloudFront-Is-SmartTV-Viewer": "false",
             "CloudFront-Is-Tablet-Viewer": "false",
             "CloudFront-Viewer-Country": "US",
-            "Host": "1234567890.execute-api.sa-east-1.amazonaws.com",
+            "Host": "1234584890.execute-api.sa-east-1.amazonaws.com",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Custom User Agent String",
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
@@ -76,7 +76,7 @@ def create_aws_api_gateway_proxy_request_event(method="GET", path="/", headers=N
                 "US"
             ],
             "Host": [
-                "0123456789.execute-api.sa-east-1.amazonaws.com"
+                "0123458489.execute-api.sa-east-1.amazonaws.com"
             ],
             "Upgrade-Insecure-Requests": [
                 "1"
@@ -101,7 +101,7 @@ def create_aws_api_gateway_proxy_request_event(method="GET", path="/", headers=N
             ]
         },
         "requestContext": {
-            "accountId": "123456789012",
+            "accountId": "123458489012",
             "resourceId": "123456",
             "stage": "prod",
             "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
@@ -123,7 +123,7 @@ def create_aws_api_gateway_proxy_request_event(method="GET", path="/", headers=N
             "path": path,
             "resourcePath": "/{proxy+}",
             "httpMethod": method,
-            "apiId": "1234567890",
+            "apiId": "1234584890",
             "protocol": "HTTP/1.1"
         }
     }

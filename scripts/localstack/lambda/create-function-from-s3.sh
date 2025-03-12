@@ -119,33 +119,33 @@ else
   echo "$0 - Preparing bucket operations"
   echo '----------------------------------------'
   echo 'Try to list'
-  echo "aws --endpoint-url=http://$HOST:4566 s3api list-objects --bucket test > /dev/null 2>&1"
-  aws --endpoint-url=http://$HOST:4566 s3api list-objects --bucket test > /dev/null 2>&1
+  echo "aws --endpoint-url=http://$HOST:4583 s3api list-objects --bucket test > /dev/null 2>&1"
+  aws --endpoint-url=http://$HOST:4583 s3api list-objects --bucket test > /dev/null 2>&1
 
   if [ $? -ne 0 ]; then
     echo 'Create the bucket'
-    echo "aws --endpoint-url=http://$HOST:4566 s3 mb s3://test"
-    aws --endpoint-url=http://$HOST:4566 s3 mb s3://test
+    echo "aws --endpoint-url=http://$HOST:4583 s3 mb s3://test"
+    aws --endpoint-url=http://$HOST:4583 s3 mb s3://test
   fi
 
   echo '----------------------------------------'
   echo "$0 - Copy lambda zip file to S3"
   echo '----------------------------------------'
-  echo "aws --endpoint-url=http://$HOST:4566 s3 cp ${FUNCTION_PATH}lambda-full.zip s3://test"
-  aws --endpoint-url=http://$HOST:4566 s3 cp ${FUNCTION_PATH}lambda-full.zip s3://test
+  echo "aws --endpoint-url=http://$HOST:4583 s3 cp ${FUNCTION_PATH}lambda-full.zip s3://test"
+  aws --endpoint-url=http://$HOST:4583 s3 cp ${FUNCTION_PATH}lambda-full.zip s3://test
 
   read -p "Press enter to continue..."
 
   echo '----------------------------------------'
   echo "$0 - Check if the lambda function exits"
   echo '----------------------------------------'
-  echo "aws --endpoint-url=http://$HOST:4566 lambda get-function --function-name $FUNCTION_NAME --region $REGION > /dev/null 2>&1"
-  aws --endpoint-url=http://$HOST:4566 lambda get-function --function-name $FUNCTION_NAME --region $REGION > /dev/null 2>&1
+  echo "aws --endpoint-url=http://$HOST:4583 lambda get-function --function-name $FUNCTION_NAME --region $REGION > /dev/null 2>&1"
+  aws --endpoint-url=http://$HOST:4583 lambda get-function --function-name $FUNCTION_NAME --region $REGION > /dev/null 2>&1
 
   if [ $? -eq 0 ]; then
     echo 'Delete the last lambda'
-    echo "aws --endpoint-url=http://$HOST:4566 lambda delete-function --function-name $FUNCTION_NAME --region $REGION"
-    aws --endpoint-url=http://$HOST:4566 lambda delete-function --function-name $FUNCTION_NAME --region $REGION
+    echo "aws --endpoint-url=http://$HOST:4583 lambda delete-function --function-name $FUNCTION_NAME --region $REGION"
+    aws --endpoint-url=http://$HOST:4583 lambda delete-function --function-name $FUNCTION_NAME --region $REGION
   fi
 
   echo '----------------------------------------'
@@ -167,13 +167,13 @@ else
   echo '----------------------------------------'
   echo "$0 - Creating the lambda function"
   echo '----------------------------------------'
-  echo "aws --endpoint-url=http://$HOST:4566 lambda create-function \
+  echo "aws --endpoint-url=http://$HOST:4583 lambda create-function \
    --function-name arn:aws:lambda:$REGION:000000000000:function:$FUNCTION_NAME \
    --runtime python3.6 --handler $HANDLER --memory-size 128 \
    --code S3Bucket=test,S3Key=lambda-full.zip --role arn:aws:iam:awslocal \
    --environment \"{\"Variables\": $ENVIRONMENT_VARIABLES}\""
 
-  aws --endpoint-url=http://$HOST:4566 lambda create-function \
+  aws --endpoint-url=http://$HOST:4583 lambda create-function \
    --function-name arn:aws:lambda:$REGION:000000000000:function:$FUNCTION_NAME \
    --runtime python3.6 --handler $HANDLER --memory-size 128 \
    --code S3Bucket=test,S3Key=lambda-full.zip --role arn:aws:iam:awslocal \

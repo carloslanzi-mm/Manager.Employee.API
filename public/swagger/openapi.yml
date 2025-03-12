@@ -1,663 +1,175 @@
-components:
-  schemas:
-    Entry:
-      properties:
-        duration:
-          example: '0:00:00.013737'
-          type: string
-        status:
-          example: healthy
-          type: string
-        tags:
-          items:
-            example: db
-            type: string
-          type: array
-      type: object
-    EntryData:
-      properties:
-        name:
-          $ref: '#/components/schemas/Entry'
-      type: object
-    HateosProductGetResponse:
-      properties:
-        code:
-          example: 1
-          type: integer
-        data:
-          $ref: '#/components/schemas/Product'
-        label:
-          example: common.success
-          type: string
-        links:
-          items:
-            $ref: '#/components/schemas/Link'
-          type: array
-        message:
-          example: Success
-          type: string
-        meta:
-          $ref: '#/components/schemas/Meta'
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: true
-          type: boolean
-      required:
-      - code
-      type: object
-    HateosProductListResponse:
-      properties:
-        code:
-          example: 1
-          type: integer
-        control:
-          $ref: '#/components/schemas/RequestControl'
-        data:
-          items:
-            $ref: '#/components/schemas/Product'
-          type: array
-        label:
-          example: common.success
-          type: string
-        message:
-          example: Success
-          type: string
-        meta:
-          $ref: '#/components/schemas/Meta'
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: true
-          type: boolean
-      required:
-      - code
-      type: object
-    HealthCheck:
-      properties:
-        entries:
-          $ref: '#/components/schemas/EntryData'
-        status:
-          example: healthy
-          type: string
-        total_duration:
-          example: '0:00:00.013737'
-          type: string
-      type: object
-    Link:
-      properties:
-        href:
-          type: string
-        method:
-          type: string
-        rel:
-          type: string
-      type: object
-    Meta:
-      properties:
-        first:
-          format: url
-          type: string
-        href:
-          format: url
-          type: string
-        last:
-          format: url
-          type: string
-        next:
-          format: url
-          type: string
-        previous:
-          format: url
-          type: string
-      type: object
-    Product:
-      properties:
-        active:
-          enum:
-          - 0
-          - 1
-          type: integer
-        created_at:
-          format: date-time
-          type: string
-        deleted_at:
-          format: date-time
-          type: string
-        description:
-          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
-            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
-            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
-            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
-            \ divis\xE3o ele/ela"
-          type: string
-        id:
-          example: 1
-          type: integer
-        name:
-          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
-            \ M\xF3veis"
-          type: string
-        sku:
-          example: 657705
-          type: integer
-        supplier_id:
-          example: 1
-          type: integer
-        updated_at:
-          format: date-time
-          type: string
-        uuid:
-          example: 4bcad46b-6978-488f-8153-1c49f8a45244
-          format: uuid
-          type: string
-      type: object
-    ProductCompleteUpdateRequest:
-      properties:
-        active:
-          enum:
-          - 0
-          - 1
-          type: integer
-        description:
-          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
-            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
-            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
-            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
-            \ divis\xE3o ele/ela"
-          type: string
-        name:
-          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
-            \ M\xF3veis"
-          type: string
-        sku:
-          example: 657705
-          type: integer
-        supplier_id:
-          example: 1
-          type: integer
-      type: object
-    ProductCreateErrorResponse:
-      properties:
-        code:
-          example: 17
-          type: integer
-        details:
-          type: string
-        label:
-          example: common.error.create_error
-          type: string
-        message:
-          example: Unable to create the record
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: false
-          type: boolean
-        trace:
-          type: string
-      required:
-      - code
-      type: object
-    ProductCreateRequest:
-      properties:
-        active:
-          enum:
-          - 0
-          - 1
-          type: integer
-        description:
-          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
-            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
-            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
-            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
-            \ divis\xE3o ele/ela"
-          type: string
-        name:
-          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
-            \ M\xF3veis"
-          type: string
-        sku:
-          example: 657705
-          type: integer
-        supplier_id:
-          example: 1
-          type: integer
-      type: object
-    ProductCreateResponse:
-      properties:
-        code:
-          example: 1
-          type: integer
-        data:
-          $ref: '#/components/schemas/Product'
-        label:
-          example: common.success
-          type: string
-        message:
-          example: Success
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: true
-          type: boolean
-      required:
-      - code
-      type: object
-    ProductGetErrorResponse:
-      properties:
-        code:
-          example: 14
-          type: integer
-        details:
-          type: string
-        label:
-          example: common.error.find_error
-          type: string
-        message:
-          example: Unable to find the record
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: false
-          type: boolean
-        trace:
-          type: string
-      required:
-      - code
-      type: object
-    ProductListErrorResponse:
-      properties:
-        code:
-          example: 11
-          type: integer
-        details:
-          type: string
-        label:
-          example: common.error.list_error
-          type: string
-        message:
-          example: Unable to return the list data, please review your request
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: false
-          type: boolean
-        trace:
-          type: string
-      required:
-      - code
-      type: object
-    ProductSoftDeleteErrorResponse:
-      properties:
-        code:
-          example: 18
-          type: integer
-        details:
-          type: string
-        label:
-          example: common.error.update_error
-          type: string
-        message:
-          example: Unable to update the record
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: false
-          type: boolean
-        trace:
-          type: string
-      required:
-      - code
-      type: object
-    ProductSoftDeleteResponse:
-      properties:
-        code:
-          example: 1
-          type: integer
-        data:
-          example:
-            deleted: true
-          type: object
-        label:
-          example: common.success
-          type: string
-        message:
-          example: Success
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: true
-          type: boolean
-      required:
-      - code
-      type: object
-    ProductSoftUpdateRequest:
-      properties:
-        field:
-          example: value
-          type: string
-      type: object
-    ProductUpdateErrorResponse:
-      properties:
-        code:
-          example: 18
-          type: integer
-        details:
-          type: string
-        label:
-          example: common.error.update_error
-          type: string
-        message:
-          example: Unable to update the record
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: false
-          type: boolean
-        trace:
-          type: string
-      required:
-      - code
-      type: object
-    ProductUpdateResponse:
-      properties:
-        code:
-          example: 1
-          type: integer
-        data:
-          $ref: '#/components/schemas/Product'
-        label:
-          example: common.success
-          type: string
-        message:
-          example: Success
-          type: string
-        params:
-          items:
-            type: string
-          type: array
-        success:
-          example: true
-          type: boolean
-      required:
-      - code
-      type: object
-    RequestControl:
-      properties:
-        count:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-        total:
-          type: integer
-      required:
-      - limit
-      type: object
-info:
-  title: template-serverless-service-python
-  version: 1.0.2
-openapi: 3.0.2
+servers:
+- url: http://localhost:5100
+  description: Development server
+- url: http://localhost:5100
+  description: Development server
 paths:
   /alive:
     get:
+      summary: Service Health Method
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthCheck'
           description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
         '424':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthCheck'
           description: Failed dependency response
-        '503':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthCheck'
+        '503':
           description: Service unavailable response
-      summary: Service Health Method
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
   /v1/product:
     get:
+      summary: Product List
       parameters:
-      - description: List limit
+      - name: limit
         in: query
-        name: limit
+        description: List limit
         required: false
         schema:
+          type: int
           example: 20
-          type: int
-      - description: List offset
+      - name: offset
         in: query
-        name: offset
+        description: List offset
         required: false
         schema:
+          type: int
           example: 0
-          type: int
-      - description: Filter fields with comma
+      - name: fields
         in: query
-        name: fields
+        description: Filter fields with comma
         required: false
         schema:
-          example: null
           type: string
-      - description: Ordination of list
+          example: null
+      - name: order_by
         in: query
-        name: order_by
+        description: Ordination of list
         required: false
         schema:
+          type: string
           enum:
           - asc
           - desc
-          type: string
-      - description: Sorting of the list
+      - name: sort_by
         in: query
-        name: sort_by
+        description: Sorting of the list
         required: false
         schema:
-          example: id
           type: string
+          example: id
       responses:
         '200':
+          description: Success response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HateosProductListResponse'
-          description: Success response
         4xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductListErrorResponse'
           description: Error response
-        5xx:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductListErrorResponse'
+        5xx:
           description: Service fail response
-      summary: Product List
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListErrorResponse'
     post:
+      summary: Product Create
       requestBody:
+        description: Product to be created
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ProductCreateRequest'
-        description: Product to be created
-        required: true
       responses:
         '200':
+          description: Success response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductCreateResponse'
-          description: Success response
         4xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductCreateErrorResponse'
           description: Error response
-        5xx:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductCreateErrorResponse'
+        5xx:
           description: Service fail response
-      summary: Product Create
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCreateErrorResponse'
   /v1/product/{uuid}:
-    delete:
-      parameters:
-      - description: Product Id
-        in: path
-        name: uuid
-        required: true
-        schema:
-          example: 4bcad46b-6978-488f-8153-1c49f8a45244
-          format: uuid
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductSoftDeleteResponse'
-          description: Success response
-        4xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductSoftDeleteErrorResponse'
-          description: Error response
-        5xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductSoftDeleteErrorResponse'
-          description: Service fail response
-      summary: Soft Product Delete
     get:
+      summary: Product Get
       parameters:
-      - description: Product Id
-        in: path
+      - in: path
         name: uuid
+        description: Product Id
         required: true
         schema:
-          example: 4bcad46b-6978-488f-8153-1c49f8a45244
-          format: uuid
           type: string
-      - description: Filter fields with comma
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      - name: fields
         in: query
-        name: fields
+        description: Filter fields with comma
         required: false
         schema:
-          example: null
           type: string
+          example: null
       responses:
         '200':
+          description: Success response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HateosProductGetResponse'
-          description: Success response
         4xx:
+          description: Error response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductGetErrorResponse'
-          description: Error response
         5xx:
+          description: Service fail response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductGetErrorResponse'
-          description: Service fail response
-      summary: Product Get
-    patch:
-      parameters:
-      - description: Product Id
-        in: path
-        name: uuid
-        required: true
-        schema:
-          example: 4bcad46b-6978-488f-8153-1c49f8a45244
-          format: uuid
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductSoftUpdateRequest'
-        description: Product field to be updated
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductUpdateResponse'
-          description: Success response
-        4xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductUpdateErrorResponse'
-          description: Error response
-        5xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductUpdateErrorResponse'
-          description: Service fail response
-      summary: Soft Product Update
     put:
+      summary: Complete Product Update
       parameters:
-      - description: Product Id
-        in: path
+      - in: path
         name: uuid
+        description: Product Id
         required: true
         schema:
-          example: 4bcad46b-6978-488f-8153-1c49f8a45244
-          format: uuid
           type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
       requestBody:
+        description: Product to be updated
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ProductCompleteUpdateRequest'
-        description: Product to be updated
-        required: true
       responses:
         '200':
           content:
@@ -665,20 +177,509 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductUpdateResponse'
         4xx:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductUpdateErrorResponse'
           description: Error response
-        5xx:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductUpdateErrorResponse'
+        5xx:
           description: Service fail response
-      summary: Complete Product Update
-servers:
-- description: Development server
-  url: http://localhost:5000
-- description: Development server
-  url: http://localhost:5000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductUpdateErrorResponse'
+    patch:
+      summary: Soft Product Update
+      parameters:
+      - in: path
+        name: uuid
+        description: Product Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      requestBody:
+        description: Product field to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSoftUpdateRequest'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductUpdateResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductUpdateErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductUpdateErrorResponse'
+    delete:
+      summary: Soft Product Delete
+      parameters:
+      - in: path
+        name: uuid
+        description: Product Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSoftDeleteResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSoftDeleteErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSoftDeleteErrorResponse'
+info:
+  title: template-serverless-service-python
+  version: 1.0.2
+openapi: 3.0.2
+components:
+  schemas:
+    Entry:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        duration:
+          type: string
+          example: '0:00:00.013737'
+        tags:
+          type: array
+          items:
+            type: string
+            example: db
+    EntryData:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Entry'
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        total_duration:
+          type: string
+          example: '0:00:00.013737'
+        entries:
+          $ref: '#/components/schemas/EntryData'
+    Meta:
+      type: object
+      properties:
+        href:
+          type: string
+          format: url
+        next:
+          type: string
+          format: url
+        previous:
+          type: string
+          format: url
+        first:
+          type: string
+          format: url
+        last:
+          type: string
+          format: url
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sku:
+          type: integer
+          example: 657705
+        name:
+          type: string
+          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
+            \ M\xF3veis"
+        description:
+          type: string
+          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
+            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
+            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
+            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
+            \ divis\xE3o ele/ela"
+        supplier_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+        uuid:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+    RequestControl:
+      type: object
+      properties:
+        offset:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        count:
+          type: integer
+      required:
+      - limit
+    HateosProductListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        control:
+          $ref: '#/components/schemas/RequestControl'
+      required:
+      - code
+    ProductListErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 11
+        label:
+          type: string
+          example: common.error.list_error
+        message:
+          type: string
+          example: Unable to return the list data, please review your request
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        rel:
+          type: string
+        method:
+          type: string
+    HateosProductGetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        data:
+          $ref: '#/components/schemas/Product'
+      required:
+      - code
+    ProductGetErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 14
+        label:
+          type: string
+          example: common.error.find_error
+        message:
+          type: string
+          example: Unable to find the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    ProductCreateRequest:
+      type: object
+      properties:
+        sku:
+          type: integer
+          example: 657705
+        name:
+          type: string
+          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
+            \ M\xF3veis"
+        description:
+          type: string
+          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
+            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
+            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
+            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
+            \ divis\xE3o ele/ela"
+        supplier_id:
+          type: integer
+          example: 1
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    ProductCreateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          $ref: '#/components/schemas/Product'
+      required:
+      - code
+    ProductCreateErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 17
+        label:
+          type: string
+          example: common.error.create_error
+        message:
+          type: string
+          example: Unable to create the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    ProductCompleteUpdateRequest:
+      type: object
+      properties:
+        sku:
+          type: integer
+          example: 657705
+        name:
+          type: string
+          example: "Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso\
+            \ M\xF3veis"
+        description:
+          type: string
+          example: "Guarda Roupa com maior resist\xEAncia, durabilidade e acabamento,\
+            \ revestimento interno e externo. Pintura em estufas modernas com UV (ultra\
+            \ violeta). Modelo com corredi\xE7a met\xE1lica em a\xE7o, 4 gavetas espa\xE7\
+            osas, perfil em alum\xEDnio, roldanas de a\xE7o carbono com rolamento,\
+            \ divis\xE3o ele/ela"
+        supplier_id:
+          type: integer
+          example: 1
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    ProductUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          $ref: '#/components/schemas/Product'
+      required:
+      - code
+    ProductUpdateErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    ProductSoftUpdateRequest:
+      type: object
+      properties:
+        field:
+          type: string
+          example: value
+    ProductSoftDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+          example:
+            deleted: true
+          additionalProperties: {}
+      required:
+      - code
+    ProductSoftDeleteErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code

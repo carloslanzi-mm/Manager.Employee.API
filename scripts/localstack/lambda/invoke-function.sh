@@ -25,7 +25,7 @@ else
   echo "Function path: $FUNCTION_PATH"
   echo "Function ARN arn:aws:lambda:us-east-1:000000000000:$FUNCTION_NAME"
 
-  echo "aws --endpoint-url=http://$HOST:4566 lambda invoke \
+  echo "aws --endpoint-url=http://$HOST:4583 lambda invoke \
   --function-name arn:aws:lambda:us-east-1:000000000000:function:$FUNCTION_NAME \
   --payload $PAYLOAD ./output/response.json \
   --log-type Tail --query 'LogResult' --output text |  base64 -d"
@@ -35,7 +35,7 @@ else
     mkdir ./output
   fi
 
-  aws --endpoint-url=http://$HOST:4566 lambda invoke \
+  aws --endpoint-url=http://$HOST:4583 lambda invoke \
   --function-name arn:aws:lambda:us-east-1:000000000000:function:$FUNCTION_NAME \
   --payload "$PAYLOAD" ./output/response.json \
   --log-type Tail --query 'LogResult' --output text |  base64 -d

@@ -45,16 +45,16 @@ else
   rm -Rf ./layer
   cd ../
 
-  echo "aws --endpoint-url=http://$HOST:4566 lambda publish-layer-version --layer-name $LAYER_NAME \
+  echo "aws --endpoint-url=http://$HOST:4583 lambda publish-layer-version --layer-name $LAYER_NAME \
    --description $LAYER_DESCRIPTION --zip-file fileb://layer.zip --compatible-runtimes \"python3.6\" \"python3.8\""
 
-  aws --endpoint-url=http://$HOST:4566 lambda publish-layer-version --layer-name $LAYER_NAME \
+  aws --endpoint-url=http://$HOST:4583 lambda publish-layer-version --layer-name $LAYER_NAME \
    --description $LAYER_DESCRIPTION --zip-file fileb://layer.zip --compatible-runtimes "python3.6" "python3.8"
 
-  echo "aws --endpoint-url=http://$HOST:4566 lambda update-function-configuration \
+  echo "aws --endpoint-url=http://$HOST:4583 lambda update-function-configuration \
    --layers arn:aws:lambda:us-east-1:000000000000:layer:$LAYER_NAME:1 --function-name $FUNCTION_NAME"
 
-   aws --endpoint-url=http://$HOST:4566 lambda update-function-configuration \
+   aws --endpoint-url=http://$HOST:4583 lambda update-function-configuration \
    --layers arn:aws:lambda:us-east-1:000000000000:layer:$LAYER_NAME:1 --function-name $FUNCTION_NAME
 
 fi

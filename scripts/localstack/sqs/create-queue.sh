@@ -12,6 +12,6 @@ else
   else
     HOST=0.0.0.0
   fi
-  echo "aws --endpoint-url=http://$HOST:4566 sqs create-queue --queue-name $1"
-  aws --endpoint-url=http://$HOST:4566 sqs create-queue --queue-name $1
+  echo "aws --endpoint-url=http://$HOST:4583 sqs create-queue --queue-name $1"
+  aws --endpoint-url=http://$HOST:4583 sqs create-queue --queue-name $1
 fi

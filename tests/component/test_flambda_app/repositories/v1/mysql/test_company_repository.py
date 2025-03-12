@@ -24,7 +24,7 @@ def test_create_company(company_repository, mock_db):
     # Cria um objeto CompanyVO com dados fictícios
     company_vo = CompanyVO(data={
         'id': None,
-        'uuid': '123e4567-e89b-12d3-a456-426614174000',
+        'uuid': '123e4584-e89b-12d3-a456-426614174000',
         'name': 'Test Company',
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
@@ -57,7 +57,7 @@ def test_update_company(company_repository, mock_db):
     # Cria um objeto CompanyVO com dados fictícios
     company_vo = CompanyVO(data={
         'id': 1,
-        'uuid': '123e4567-e89b-12d3-a456-426614174000',
+        'uuid': '123e4584-e89b-12d3-a456-426614174000',
         'name': 'Updated Company',
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
@@ -82,7 +82,7 @@ def test_update_company(company_repository, mock_db):
 #     mock_cursor = mock_db._execute.return_value
 #     mock_cursor.fetchone.return_value = {
 #         'id': 1,
-#         'uuid': '123e4567-e89b-12d3-a456-426614174000',
+#         'uuid': '123e4584-e89b-12d3-a456-426614174000',
 #         'name': 'Test Company',
 #         'created_at': datetime.now().isoformat(),
 #         'updated_at': datetime.now().isoformat(),
@@ -93,7 +93,7 @@ def test_update_company(company_repository, mock_db):
 #     company_object = MagicMock(spec=CompanyVO)
 #     company_object.name = 'Test Company'  # Atribuindo o valor real para 'name'
 #     company_object.id = 1
-#     company_object.uuid = '123e4567-e89b-12d3-a456-426614174000'
+#     company_object.uuid = '123e4584-e89b-12d3-a456-426614174000'
 #
 #     # Configure o mock para retornar o objeto mockado de CompanyVO
 #     mock_cursor.fetchone.return_value = company_object
@@ -118,9 +118,9 @@ def test_update_company(company_repository, mock_db):
 #     # Mock do retorno do banco de dados
 #     mock_cursor = mock_db._execute.return_value
 #     mock_cursor.fetchall.return_value = [
-#         {'id': 1, 'uuid': '123e4567-e89b-12d3-a456-426614174000', 'name': 'Company 1',
+#         {'id': 1, 'uuid': '123e4584-e89b-12d3-a456-426614174000', 'name': 'Company 1',
 #          'created_at': datetime.now().isoformat()},
-#         {'id': 2, 'uuid': '223e4567-e89b-12d3-a456-426614174000', 'name': 'Company 2',
+#         {'id': 2, 'uuid': '223e4584-e89b-12d3-a456-426614174000', 'name': 'Company 2',
 #          'created_at': datetime.now().isoformat()}
 #     ]
 #

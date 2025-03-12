@@ -32,10 +32,10 @@ else
     while IFS= read -r arn
     do
       echo "current arn: $arn"
-      echo "aws --endpoint-url=http://$HOST:4566 lambda update-function-configuration \
+      echo "aws --endpoint-url=http://$HOST:4583 lambda update-function-configuration \
      --layers $arn --function-name $FUNCTION_NAME"
 
-     aws --endpoint-url=http://$HOST:4566 lambda update-function-configuration \
+     aws --endpoint-url=http://$HOST:4583 lambda update-function-configuration \
      --layers $arn --function-name $FUNCTION_NAME
     done < "$input"
   fi

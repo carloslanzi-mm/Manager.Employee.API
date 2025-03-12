@@ -17,11 +17,11 @@ else
       HOST=0.0.0.0
     fi
     REGION=us-east-1
-    echo "aws --endpoint-url=http://$HOST:4566 lambda create-event-source-mapping \
+    echo "aws --endpoint-url=http://$HOST:4583 lambda create-event-source-mapping \
     --function-name arn:aws:lambda:$REGION:000000000000:function:$1 \
     --event-source-arn arn:aws:sqs:$REGION:000000000000:$2"
 
-    aws --endpoint-url=http://$HOST:4566 lambda create-event-source-mapping \
+    aws --endpoint-url=http://$HOST:4583 lambda create-event-source-mapping \
     --function-name arn:aws:lambda:$REGION:000000000000:function:$1 \
     --event-source-arn arn:aws:sqs:$REGION:000000000000:$2
 

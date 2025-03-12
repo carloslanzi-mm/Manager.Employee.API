@@ -23,5 +23,5 @@ then
     BUCKET=$APP_BUCKET
   fi
 fi
-echo "aws --endpoint-url=http://$HOST:4566 s3 ls s3://$BUCKET"
-aws --endpoint-url=http://$HOST:4566 s3 ls s3://$BUCKET
+echo "aws --endpoint-url=http://$HOST:4583 s3 ls s3://$BUCKET"
+aws --endpoint-url=http://$HOST:4583 s3 ls s3://$BUCKET

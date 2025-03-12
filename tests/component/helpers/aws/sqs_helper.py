@@ -38,7 +38,7 @@ class SQSHelper:
             "messageAttributes": event.message_attributes if event.message_attributes is not None else {},
             "md5OfBody": event.md5_of_body,
             "eventSource": "aws:sqs",
-            "eventSourceARN": "arn:aws:sqs:us-east-2:123456789:queuename",
+            "eventSourceARN": "arn:aws:sqs:us-east-2:123458489:queuename",
             "awsRegion": "us-east-2",
             "field_data": "body",
             "body": event.body

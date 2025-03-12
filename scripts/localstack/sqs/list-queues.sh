@@ -8,5 +8,5 @@ if [ $RUNNING_IN_CONTAINER ]; then
 else
   HOST=0.0.0.0
 fi
-echo "aws --endpoint-url=http://$HOST:4566 sqs list-queues"
-aws --endpoint-url=http://$HOST:4566 sqs list-queues
+echo "aws --endpoint-url=http://$HOST:4583 sqs list-queues"
+aws --endpoint-url=http://$HOST:4583 sqs list-queues

@@ -52,10 +52,10 @@ fi
 QUEUE=$1
 if [ -z "$QUEUE" ]
 then
-  QUEUE='http://$HOST:4566/000000000000/test-queue'
+  QUEUE='http://$HOST:4583/000000000000/test-queue'
 else
   QUEUE=$(basename -- $QUEUE)
-  QUEUE="http://$HOST:4566/000000000000/${QUEUE}"
+  QUEUE="http://$HOST:4583/000000000000/${QUEUE}"
 fi
 MESSAGE=$2
 if [ -z "$MESSAGE" ]
@@ -69,5 +69,5 @@ fi
 
 # cat ${current_file_path}sample.json
 #echo $MESSAGE
-echo "aws --endpoint-url=http://$HOST:4566 sqs send-message --queue-url $QUEUE --message-body '$MESSAGE'"
-aws --endpoint-url=http://$HOST:4566 sqs send-message --queue-url $QUEUE --message-body "$MESSAGE"
+echo "aws --endpoint-url=http://$HOST:4583 sqs send-message --queue-url $QUEUE --message-body '$MESSAGE'"
+aws --endpoint-url=http://$HOST:4583 sqs send-message --queue-url $QUEUE --message-body "$MESSAGE"
