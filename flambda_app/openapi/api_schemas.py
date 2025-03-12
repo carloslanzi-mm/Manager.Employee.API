@@ -291,21 +291,6 @@ class CompanyDeleteErrorResponseSchema(ErrorSchema):
 # ***************************
 class EmployeeSchema(Schema):
     id = fields.Int(example=1)
-    sku = fields.Int(example=657705)
-    name = fields.Str(example="Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso Móveis")
-    description = fields.Str(example="Guarda Roupa com maior resistência, durabilidade e acabamento, revestimento "
-                                     "interno e externo. Pintura em estufas modernas com UV (ultra violeta). "
-                                     "Modelo com corrediça metálica em aço, 4 gavetas espaçosas, perfil em alumínio, "
-                                     "roldanas de aço carbono com rolamento, divisão ele/ela")
-    supplier_id = fields.Int(example=1)
-    created_at = fields.DateTime()
-    updated_at = fields.DateTime()
-    deleted_at = fields.DateTime()
-    active = fields.Int(validate=validate.OneOf([0, 1]))
-    uuid = fields.UUID(example="4bcad46b-6978-488f-8153-1c49f8a45244")
-
-class EmployeeSchema(Schema):
-    id = fields.Int(example=1)
     uuid = fields.UUID(example="4bcad46b-6978-488f-8153-1c49f8a45244")
     company_id = fields.Int(example=1001)
     name = fields.Str(example="John Wick")
