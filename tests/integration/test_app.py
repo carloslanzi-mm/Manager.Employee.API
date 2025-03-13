@@ -8,7 +8,7 @@ import unittest
 
 import serverless_wsgi
 
-import app
+import app_old
 from flambda_app import APP_NAME, APP_VERSION
 from flambda_app.aws.sqs import SQS
 from tests.integration.integrationtestutils import BaseIntegrationTestCase
@@ -37,7 +37,7 @@ class AppTestCase(BaseIntegrationTestCase):
         event = create_aws_api_gateway_proxy_request_event('GET', '/')
         context = FakeLambdaContext()
 
-        response = serverless_wsgi.handle_request(app.APP, event, context)
+        response = serverless_wsgi.handle_request(app_old.APP, event, context)
 
         self.assertTrue('statusCode' in response)
         self.assertTrue('body' in response)
@@ -54,7 +54,7 @@ class AppTestCase(BaseIntegrationTestCase):
         event = create_aws_api_gateway_proxy_request_event('GET', '/alive')
         context = FakeLambdaContext()
 
-        response = serverless_wsgi.handle_request(app.APP, event, context)
+        response = serverless_wsgi.handle_request(app_old.APP, event, context)
 
         self.assertTrue('statusCode' in response)
         self.assertTrue('body' in response)

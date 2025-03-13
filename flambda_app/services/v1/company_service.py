@@ -1,5 +1,3 @@
-import copy
-
 from flambda_app import helper
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector

@@ -1,7 +1,7 @@
 servers:
-- url: http://localhost:5100
+- url: http://localhost:5000
   description: Development server
-- url: http://localhost:5100
+- url: http://localhost:5000
   description: Development server
 paths:
   /alive:
@@ -255,6 +255,390 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductSoftDeleteErrorResponse'
+  /v1/company:
+    get:
+      summary: Company List
+      parameters:
+      - name: limit
+        in: query
+        description: List limit
+        required: false
+        schema:
+          type: int
+          example: 20
+      - name: offset
+        in: query
+        description: List offset
+        required: false
+        schema:
+          type: int
+          example: 0
+      - name: fields
+        in: query
+        description: Filter fields with comma
+        required: false
+        schema:
+          type: string
+          example: null
+      - name: order_by
+        in: query
+        description: Ordination of list
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: sort_by
+        in: query
+        description: Sorting of the list
+        required: false
+        schema:
+          type: string
+          example: id
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HateosCompanyListResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyListErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyListErrorResponse'
+    post:
+      summary: Company Create
+      requestBody:
+        description: Company to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateRequest'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateErrorResponse'
+  /v1/company/{uuid}:
+    get:
+      summary: Company Get
+      parameters:
+      - in: path
+        name: uuid
+        description: Company Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      - name: fields
+        in: query
+        description: Filter fields with comma
+        required: false
+        schema:
+          type: string
+          example: null
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HateosCompanyGetResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyGetErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyGetErrorResponse'
+    put:
+      summary: Complete Company Update
+      parameters:
+      - in: path
+        name: uuid
+        description: Company Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      requestBody:
+        description: Company to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCompleteUpdateRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyUpdateResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyUpdateErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyUpdateErrorResponse'
+    delete:
+      summary: Soft Company Delete
+      parameters:
+      - in: path
+        name: uuid
+        description: Company Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanySoftDeleteResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanySoftDeleteErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanySoftDeleteErrorResponse'
+  /v1/employee:
+    get:
+      summary: Employee List
+      parameters:
+      - name: limit
+        in: query
+        description: List limit
+        required: false
+        schema:
+          type: int
+          example: 20
+      - name: offset
+        in: query
+        description: List offset
+        required: false
+        schema:
+          type: int
+          example: 0
+      - name: fields
+        in: query
+        description: Filter fields with comma
+        required: false
+        schema:
+          type: string
+          example: null
+      - name: order_by
+        in: query
+        description: Ordination of list
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: sort_by
+        in: query
+        description: Sorting of the list
+        required: false
+        schema:
+          type: string
+          example: id
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HateosEmployeeListResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListErrorResponse'
+    post:
+      summary: Company Create
+      requestBody:
+        description: Company to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateRequest'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreateErrorResponse'
+  /v1/employee/{uuid}:
+    get:
+      summary: Employee Get
+      parameters:
+      - in: path
+        name: uuid
+        description: Employee Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      - name: fields
+        in: query
+        description: Filter fields with comma
+        required: false
+        schema:
+          type: string
+          example: null
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HateosEmployeeGetResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeGetErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeGetErrorResponse'
+    put:
+      summary: Complete Employee Update
+      parameters:
+      - in: path
+        name: uuid
+        description: Employee Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      requestBody:
+        description: Employee to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCompleteUpdateRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeUpdateResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeUpdateErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeUpdateErrorResponse'
+    delete:
+      summary: Soft Employee Delete
+      parameters:
+      - in: path
+        name: uuid
+        description: Employee Id
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSoftDeleteResponse'
+        4xx:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSoftDeleteErrorResponse'
+        5xx:
+          description: Service fail response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSoftDeleteErrorResponse'
 info:
   title: template-serverless-service-python
   version: 1.0.2
@@ -659,6 +1043,577 @@ components:
       required:
       - code
     ProductSoftDeleteErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Empresa 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+        uuid:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    HateosCompanyListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        control:
+          $ref: '#/components/schemas/RequestControl'
+      required:
+      - code
+    CompanyListErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 11
+        label:
+          type: string
+          example: common.error.list_error
+        message:
+          type: string
+          example: Unable to return the list data, please review your request
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    HateosCompanyGetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        data:
+          $ref: '#/components/schemas/Company'
+      required:
+      - code
+    CompanyGetErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 14
+        label:
+          type: string
+          example: common.error.find_error
+        message:
+          type: string
+          example: Unable to find the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    CompanyCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Empresa 1
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    CompanyCreateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          $ref: '#/components/schemas/Company'
+      required:
+      - code
+    CompanyCreateErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 17
+        label:
+          type: string
+          example: common.error.create_error
+        message:
+          type: string
+          example: Unable to create the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    CompanyCompleteUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Empresa 1
+        active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    CompanyUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          $ref: '#/components/schemas/Company'
+      required:
+      - code
+    CompanyUpdateErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    CompanySoftDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+          example:
+            deleted: true
+          additionalProperties: {}
+      required:
+      - code
+    CompanySoftDeleteErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        uuid:
+          type: string
+          format: uuid
+          example: 4bcad46b-6978-488f-8153-1c49f8a45244
+        company_id:
+          type: integer
+          example: 1001
+        name:
+          type: string
+          example: John Wick
+        hourly_rate:
+          type: number
+          example: 25.5
+        is_admin:
+          type: integer
+          enum:
+          - 0
+          - 1
+        is_active:
+          type: integer
+          enum:
+          - 0
+          - 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+    HateosEmployeeListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+        control:
+          $ref: '#/components/schemas/RequestControl'
+      required:
+      - code
+    EmployeeListErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 11
+        label:
+          type: string
+          example: common.error.list_error
+        message:
+          type: string
+          example: Unable to return the list data, please review your request
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    HateosEmployeeGetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        data:
+          $ref: '#/components/schemas/Employee'
+      required:
+      - code
+    EmployeeGetErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 14
+        label:
+          type: string
+          example: common.error.find_error
+        message:
+          type: string
+          example: Unable to find the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    EmployeeCompleteUpdateRequest:
+      type: object
+      properties:
+        company_id:
+          type: integer
+          example: 1001
+        name:
+          type: string
+          example: John Wick
+        hourly_rate:
+          type: number
+          example: 25.5
+        is_admin:
+          type: integer
+          enum:
+          - 0
+          - 1
+        is_active:
+          type: integer
+          enum:
+          - 0
+          - 1
+    EmployeeUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          $ref: '#/components/schemas/Employee'
+      required:
+      - code
+    EmployeeUpdateErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+          example: 18
+        label:
+          type: string
+          example: common.error.update_error
+        message:
+          type: string
+          example: Unable to update the record
+        params:
+          type: array
+          items:
+            type: string
+        details:
+          type: string
+        trace:
+          type: string
+      required:
+      - code
+    EmployeeSoftDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: common.success
+        message:
+          type: string
+          example: Success
+        params:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+          example:
+            deleted: true
+          additionalProperties: {}
+      required:
+      - code
+    EmployeeSoftDeleteErrorResponse:
       type: object
       properties:
         success:

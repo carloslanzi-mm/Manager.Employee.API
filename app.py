@@ -725,7 +725,7 @@ def company_create():
 @APP.route('/v1/company/<id>', methods=['PATCH'])
 def company_update(id):
     """
-    Product update route
+    Company update route
 
     :return Endpoint with RESTful pattern
 
@@ -735,37 +735,37 @@ def company_update(id):
     :rtype flask.Response
         ---
         put:
-            summary: Complete Product Update
+            summary: Complete Company Update
             parameters:
             - in: path
               name: uuid
-              description: "Product Id"
+              description: "Company Id"
               required: true
               schema:
                 type: string
                 format: uuid
                 example: 4bcad46b-6978-488f-8153-1c49f8a45244
             requestBody:
-                description: 'Product to be updated'
+                description: 'Company to be updated'
                 required: true
                 content:
                     application/json:
-                        schema: ProductCompleteUpdateRequestSchema
+                        schema: CompanyCompleteUpdateRequestSchema
             responses:
                 200:
                     content:
                         application/json:
-                            schema: ProductUpdateResponseSchema
+                            schema: CompanyUpdateResponseSchema
                 4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductUpdateErrorResponseSchema
+                            schema: CompanyUpdateErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductUpdateErrorResponseSchema
+                            schema: CompanyUpdateErrorResponseSchema
             """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -794,7 +794,7 @@ def company_update(id):
 @APP.route(API_ROOT + '/v1/company', methods=['GET'])
 def company_list():
     """
-    Product list route
+    Company list route
 
     :return Endpoint with RESTful pattern
 
@@ -805,7 +805,7 @@ def company_list():
 
         ---
         get:
-            summary: Product List
+            summary: Company List
             parameters:
             - name: limit
               in: query
@@ -849,17 +849,17 @@ def company_list():
                     description: Success response
                     content:
                         application/json:
-                            schema: HateosProductListResponseSchema
+                            schema: HateosCompanyListResponseSchema
                 4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductListErrorResponseSchema
+                            schema: CompanyListErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductListErrorResponseSchema
+                            schema: CompanyListErrorResponseSchema
         """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -894,7 +894,7 @@ def company_list():
 @APP.route(API_ROOT + '/v1/company/<id>', methods=['GET'])
 def company_get(id):
     """
-    Product get route
+    Company get route
 
     :return Endpoint with RESTful pattern
 
@@ -904,11 +904,11 @@ def company_get(id):
     :rtype flask.Response
         ---
         get:
-            summary: Product Get
+            summary: Company Get
             parameters:
             - in: path
               name: uuid
-              description: "Product Id"
+              description: "Company Id"
               required: true
               schema:
                 type: string
@@ -926,17 +926,17 @@ def company_get(id):
                     description: Success response
                     content:
                         application/json:
-                            schema: HateosProductGetResponseSchema
+                            schema: HateosCompanyGetResponseSchema
                 4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductGetErrorResponseSchema
+                            schema: CompanyGetErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductGetErrorResponseSchema
+                            schema: CompanyGetErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -969,7 +969,7 @@ def company_get(id):
 @APP.route('/v1/company/<id>', methods=['DELETE'])
 def company_delete(id):
     """
-    Product delete route
+    Company delete route
 
     :return Endpoint with RESTful pattern
 
@@ -979,11 +979,11 @@ def company_delete(id):
     :rtype flask.Response
             ---
             delete:
-                summary: Soft Product Delete
+                summary: Soft Company Delete
                 parameters:
                 - in: path
                   name: uuid
-                  description: "Product Id"
+                  description: "Company Id"
                   required: true
                   schema:
                     type: string
@@ -994,17 +994,17 @@ def company_delete(id):
                         description: Success response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteResponseSchema
+                                schema: CompanySoftDeleteResponseSchema
                     4xx:
                         description: Error response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
+                                schema: CompanySoftDeleteErrorResponseSchema
                     5xx:
                         description: Service fail response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
+                                schema: CompanySoftDeleteErrorResponseSchema
                     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -1137,7 +1137,7 @@ def employee_create():
 @APP.route('/v1/employee/<id>', methods=['PATCH'])
 def employee_update(id):
     """
-    Product update route
+    Employee update route
 
     :return Endpoint with RESTful pattern
 
@@ -1147,37 +1147,37 @@ def employee_update(id):
     :rtype flask.Response
         ---
         put:
-            summary: Complete Product Update
+            summary: Complete Employee Update
             parameters:
             - in: path
               name: uuid
-              description: "Product Id"
+              description: "Employee Id"
               required: true
               schema:
                 type: string
                 format: uuid
                 example: 4bcad46b-6978-488f-8153-1c49f8a45244
             requestBody:
-                description: 'Product to be updated'
+                description: 'Employee to be updated'
                 required: true
                 content:
                     application/json:
-                        schema: ProductCompleteUpdateRequestSchema
+                        schema: EmployeeCompleteUpdateRequestSchema
             responses:
                 200:
                     content:
                         application/json:
-                            schema: ProductUpdateResponseSchema
-                4xx:da
+                            schema: EmployeeUpdateResponseSchema
+                4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductUpdateErrorResponseSchema
+                            schema: EmployeeUpdateErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductUpdateErrorResponseSchema
+                            schema: EmployeeUpdateErrorResponseSchema
             """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -1206,7 +1206,7 @@ def employee_update(id):
 @APP.route(API_ROOT + '/v1/employee', methods=['GET'])
 def employee_list():
     """
-    Product list route
+    Employee list route
 
     :return Endpoint with RESTful pattern
 
@@ -1217,7 +1217,7 @@ def employee_list():
 
         ---
         get:
-            summary: Product List
+            summary: Employee List
             parameters:
             - name: limit
               in: query
@@ -1261,17 +1261,17 @@ def employee_list():
                     description: Success response
                     content:
                         application/json:
-                            schema: HateosProductListResponseSchema
+                            schema: HateosEmployeeListResponseSchema
                 4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductListErrorResponseSchema
+                            schema: EmployeeListErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductListErrorResponseSchema
+                            schema: EmployeeListErrorResponseSchema
         """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -1306,7 +1306,7 @@ def employee_list():
 @APP.route(API_ROOT + '/v1/employee/<id>', methods=['GET'])
 def employee_get(id):
     """
-    Product get route
+    Employee get route
 
     :return Endpoint with RESTful pattern
 
@@ -1316,11 +1316,11 @@ def employee_get(id):
     :rtype flask.Response
         ---
         get:
-            summary: Product Get
+            summary: Employee Get
             parameters:
             - in: path
               name: uuid
-              description: "Product Id"
+              description: "Employee Id"
               required: true
               schema:
                 type: string
@@ -1338,17 +1338,17 @@ def employee_get(id):
                     description: Success response
                     content:
                         application/json:
-                            schema: HateosProductGetResponseSchema
+                            schema: HateosEmployeeGetResponseSchema
                 4xx:
                     description: Error response
                     content:
                         application/json:
-                            schema: ProductGetErrorResponseSchema
+                            schema: EmployeeGetErrorResponseSchema
                 5xx:
                     description: Service fail response
                     content:
                         application/json:
-                            schema: ProductGetErrorResponseSchema
+                            schema: EmployeeGetErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -1381,7 +1381,7 @@ def employee_get(id):
 @APP.route('/v1/employee/<id>', methods=['DELETE'])
 def employee_delete(id):
     """
-    Product delete route
+    Employee delete route
 
     :return Endpoint with RESTful pattern
 
@@ -1391,11 +1391,11 @@ def employee_delete(id):
     :rtype flask.Response
             ---
             delete:
-                summary: Soft Product Delete
+                summary: Soft Employee Delete
                 parameters:
                 - in: path
                   name: uuid
-                  description: "Product Id"
+                  description: "Employee Id"
                   required: true
                   schema:
                     type: string
@@ -1406,17 +1406,17 @@ def employee_delete(id):
                         description: Success response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteResponseSchema
+                                schema: EmployeeSoftDeleteResponseSchema
                     4xx:
                         description: Error response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
+                                schema: EmployeeSoftDeleteErrorResponseSchema
                     5xx:
                         description: Service fail response
                         content:
                             application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
+                                schema: EmployeeSoftDeleteErrorResponseSchema
                     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
@@ -1491,6 +1491,31 @@ spec.path(view=product_delete,
 # *************
 # company
 # *************
+spec.path(view=company_list,
+          path="/v1/company", operations=get_doc(company_list))
+spec.path(view=company_get,
+          path="/v1/company/{uuid}", operations=get_doc(company_get))
+spec.path(view=company_create,
+          path="/v1/company", operations=get_doc(company_create))
+spec.path(view=company_update,
+          path="/v1/company/{uuid}", operations=get_doc(company_update))
+spec.path(view=company_delete,
+          path="/v1/company/{uuid}", operations=get_doc(company_delete))
+
+# *************
+# employee
+# *************
+spec.path(view=employee_list,
+          path="/v1/employee", operations=get_doc(employee_list))
+spec.path(view=employee_get,
+          path="/v1/employee/{uuid}", operations=get_doc(employee_get))
+spec.path(view=employee_create,
+          path="/v1/employee", operations=get_doc(employee_create))
+spec.path(view=employee_update,
+          path="/v1/employee/{uuid}", operations=get_doc(employee_update))
+spec.path(view=employee_delete,
+          path="/v1/employee/{uuid}", operations=get_doc(employee_delete))
+
 
 print_routes(APP, LOGGER)
 LOGGER.info(f'Running at {ENV}')
