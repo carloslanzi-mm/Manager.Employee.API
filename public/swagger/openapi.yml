@@ -1,7 +1,7 @@
 servers:
-- url: http://localhost:5000
+- url: http://localhost:5100
   description: Development server
-- url: http://localhost:5000
+- url: http://localhost:5100
   description: Development server
 paths:
   /alive:

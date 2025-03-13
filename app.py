@@ -28,6 +28,7 @@ from flambda_app.services.product_manager import ProductManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
 from flambda_app.services.v1.product_service import ProductService as ProductServiceV1
+from flambda_app.vos.employee import EmployeeTurnstileInputVO
 
 # load directly by boot
 ENV = boot.get_environment()
@@ -502,7 +503,6 @@ def product_update(uuid):
     manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-
         response.set_data(manager.update(request.to_dict(), uuid))
         # response.set_total(manager.count(request))
     except CustomException as error:
@@ -1084,44 +1084,6 @@ def employee_create():
         created_employee = manager.create(request.to_dict())
         response.set_data(created_employee)
 
-        # Se o funcionário foi criado com sucesso, faz a chamada para /v1/turnstile
-        if created_employee and status_code == 200:
-            try:
-                import json
-                import time
-
-                import requests
-                from requests.adapters import HTTPAdapter
-                from urllib3.util import Retry
-
-                session = requests.Session()
-                retry_strategy = Retry(
-                    total=3,
-                    backoff_factor=0.5
-                )
-                adapter = HTTPAdapter(max_retries=retry_strategy)
-                session.mount("http://", adapter)
-
-                turnstile_data = {
-                    "uuid": created_employee.get("uuid"),
-                    "name": created_employee.get("name"),
-                    "is_active": False,
-                }
-
-                turnstile_url = os.getenv('TURNSTILE_API_URL', 'http://localhost:5000')
-                turnstile_response = session.post(
-                    f"{turnstile_url}/v1/turnstile",
-                    json=turnstile_data,
-                    headers={"Content-Type": "application/json"},
-                    timeout=5
-                )
-
-                if turnstile_response.status_code != 200:
-                    LOGGER.error(f"Erro ao criar registro na catraca: {turnstile_response.text}")
-
-            except Exception as turnstile_error:
-                LOGGER.error(f"Erro ao chamar endpoint da catraca: {str(turnstile_error)}")
-
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -1189,8 +1151,10 @@ def employee_update(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.update(request.to_dict(), id))
-        # response.set_total(manager.count(request))
+        # Primeiro obtém os dados do funcionário antes de deletar
+        employee_data = manager.get(request.to_dict(), id)
+        updated_employee = manager.update(request.to_dict(), id)
+        response.set_data(updated_employee)
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -1432,29 +1396,8 @@ def employee_delete(id):
         employee_data = manager.get(request.to_dict(), id)
 
         # Deleta o funcionário
-        data = {"deleted": manager.delete(request.to_dict(), id)}
-        response.set_data(data)
-
-        # Se o funcionário foi deletado com sucesso, deleta na catraca
-        if data["deleted"] and status_code == 200 and employee_data:
-            try:
-                import os
-
-                from python_request import python_request
-
-                turnstile_url = os.getenv('TURNSTILE_API_URL', 'http://localhost:5000')
-                turnstile_response = python_request(
-                    "DELETE",
-                    f"{turnstile_url}/v1/turnstile/{employee_data.get('uuid')}",
-                    headers={"Content-Type": "application/json"},
-                    timeout=5
-                )
-
-                if turnstile_response.status_code != 200:
-                    LOGGER.error(f"Erro ao deletar registro na catraca: {turnstile_response.text}")
-
-            except Exception as turnstile_error:
-                LOGGER.error(f"Erro ao chamar endpoint da catraca: {str(turnstile_error)}")
+        result = manager.delete(request.to_dict(), id)
+        response.set_data({"deleted": result})
 
     except CustomException as error:
         LOGGER.error(error)
