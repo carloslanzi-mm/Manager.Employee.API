@@ -4,22 +4,23 @@ This module contains the handler method
 """
 import base64
 import os
+import socket
+
+import requests
 
 import boot
-from flambda_app import APP_NAME, APP_VERSION, http_helper
-from flambda_app import helper
+from flambda_app import APP_NAME, APP_VERSION, helper, http_helper
 from flambda_app.config import get_config
 from flambda_app.enums.messages import MessagesEnum
-from flambda_app.exceptions import ApiException, ValidationException, CustomException
+from flambda_app.exceptions import ApiException, CustomException, ValidationException
 from flambda_app.flambda import Flambda
 from flambda_app.helper import open_vendor_file, print_routes
-from flambda_app.http_helper import CUSTOM_DEFAULT_HEADERS, set_hateos_links, set_hateos_meta, \
-    get_favicon_32x32_data, get_favicon_16x16_data
+from flambda_app.http_helper import (CUSTOM_DEFAULT_HEADERS, get_favicon_16x16_data,
+                                     get_favicon_32x32_data, set_hateos_links, set_hateos_meta)
 from flambda_app.http_resources.request import ApiRequest
 from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger, set_debug_mode
-from flambda_app.openapi import api_schemas
-from flambda_app.openapi import spec, get_doc, generate_openapi_yml
+from flambda_app.openapi import api_schemas, generate_openapi_yml, get_doc, spec
 from flambda_app.services.company_manager import CompanyManager
 from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
@@ -27,6 +28,7 @@ from flambda_app.services.product_manager import ProductManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
 from flambda_app.services.v1.product_service import ProductService as ProductServiceV1
+from flambda_app.vos.employee import EmployeeTurnstileInputVO
 
 # load directly by boot
 ENV = boot.get_environment()
@@ -501,7 +503,6 @@ def product_update(uuid):
     manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-
         response.set_data(manager.update(request.to_dict(), uuid))
         # response.set_total(manager.count(request))
     except CustomException as error:
@@ -1080,12 +1081,9 @@ def employee_create():
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.create(request.to_dict()))
-        # response.set_total(manager.count(request))
+        created_employee = manager.create(request.to_dict())
+        response.set_data(created_employee)
 
-        # hateos
-        # set_hateos_links(request, response, uuid)
-        # set_hateos_meta(request, response, uuid)
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -1153,8 +1151,10 @@ def employee_update(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.update(request.to_dict(), id))
-        # response.set_total(manager.count(request))
+        # Primeiro obtém os dados do funcionário antes de deletar
+        employee_data = manager.get(request.to_dict(), id)
+        updated_employee = manager.update(request.to_dict(), id)
+        response.set_data(updated_employee)
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -1392,9 +1392,13 @@ def employee_delete(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = {"deleted": manager.delete(request.to_dict(), id)}
-        response.set_data(data)
-        # response.set_total(manager.count(request))
+        # Primeiro obtém os dados do funcionário antes de deletar
+        employee_data = manager.get(request.to_dict(), id)
+
+        # Deleta o funcionário
+        result = manager.delete(request.to_dict(), id)
+        response.set_data({"deleted": result})
+
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
