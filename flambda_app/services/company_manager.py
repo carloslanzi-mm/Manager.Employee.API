@@ -24,15 +24,15 @@ class CompanyManager:
         self.DEBUG = flag
         self.company_service.debug(self.DEBUG)
 
-    def list(self, request: dict):
-        data = self.company_service.list(request)
+    def list(self, request: ApiRequest) -> CompanyVO:
+        data = self.company_service.list(request.to_dict())
         if (data is None or len(data) == 0) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
         return data
 
-    def count(self, request: dict):
-        total = self.company_service.count(request)
+    def count(self, request: ApiRequest) -> CompanyVO:
+        total = self.company_service.count(request.to_dict())
         if self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception

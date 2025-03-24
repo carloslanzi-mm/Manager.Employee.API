@@ -789,7 +789,7 @@ def company_update(id) -> Response:
 
 
 @APP.route(API_ROOT + '/v1/company', methods=['GET'])
-def company_list():
+def company_list() -> Response:
     """
     Company list route
 
@@ -868,9 +868,9 @@ def company_list():
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = manager.list(request.to_dict())
+        data = manager.list(request)
         response.set_data(data)
-        response.set_total(manager.count(request.to_dict()))
+        response.set_total(manager.count(request))
 
         # hateos
         response.links = None

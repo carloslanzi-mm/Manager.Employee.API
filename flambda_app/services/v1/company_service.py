@@ -48,11 +48,12 @@ class CompanyService:
         if self.REDIS_ENABLED:
             self.redis_company_repository.debug = self.DEBUG
 
-    def list(self, request: dict):
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+    def list(self, request_formatted: dict) -> CompanyVO:
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
 
         data = []
-        where = request['where']
+        where = request_formatted['where']
         # if where == dict():
         #     where = {
         #         'active': 1
@@ -62,11 +63,11 @@ class CompanyService:
         where['deleted_at'] = None
 
         try:
-            offset = request['offset']
-            limit = request['limit']
-            order_by = request['order_by']
-            sort_by = request['sort_by']
-            fields = request['fields']
+            offset = request_formatted['offset']
+            limit = request_formatted['limit']
+            order_by = request_formatted['order_by']
+            sort_by = request_formatted['sort_by']
+            fields = request_formatted['fields']
             data = self.company_repository.list(
                 where=where, offset=offset, limit=limit, order_by=order_by,
                 sort_by=sort_by, fields=fields)
