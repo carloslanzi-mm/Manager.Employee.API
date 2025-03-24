@@ -241,7 +241,7 @@ class EmployeeService:
 
         return result
 
-    def validate_data(self, data, original_employee):
+    def validate_data(self, data: Dict[str, Any], original_employee: EmployeeVO) -> None:
         allowed_fields = list(original_employee.to_dict().keys())
         try:
             allowed_fields.remove(self.employee_repository.UUID_KEY)
