@@ -173,14 +173,15 @@ class EmployeeService:
 
         return data
 
-    def update(self, request: dict, id):
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+    def update(self, request_formatted: dict, id: int) -> EmployeeVO:
+        self.logger.info(
+            'method: {} - request: {}'.format(get_function_name(), request_formatted))
 
         original_employee = self.employee_repository.get(id, key=self.employee_repository.PK)
         if original_employee is None:
             raise DatabaseException(MessagesEnum.FIND_ERROR)
 
-        data = request['where']
+        data = request_formatted['where']
         if self.DEBUG:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
@@ -204,7 +205,6 @@ class EmployeeService:
                                                       key=self.employee_repository.PK)
 
             if updated:
-                # convert to vo and prepare for api response
                 data = employee_vo.to_api_response()
             else:
                 data = None

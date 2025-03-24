@@ -1097,7 +1097,7 @@ def employee_create() -> Response:
 
 
 @APP.route('/v1/employee/<id>', methods=['PATCH'])
-def employee_update(id):
+def employee_update(id) -> Response:
     """
     Employee update route
 
@@ -1151,7 +1151,7 @@ def employee_update(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.update(request.to_dict(), id))
+        response.set_data(manager.update(request, id))
         # response.set_total(manager.count(request))
     except CustomException as error:
         LOGGER.error(error)

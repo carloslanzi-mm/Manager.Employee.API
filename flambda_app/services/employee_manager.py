@@ -52,8 +52,8 @@ class EmployeeManager:
             raise self.exception
         return data
 
-    def update(self, request: dict, id):
-        data = self.employee_service.update(request, id)
+    def update(self, request: ApiResponse, id: int):
+        data = self.employee_service.update(request.to_dict(), id)
         if (data is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception

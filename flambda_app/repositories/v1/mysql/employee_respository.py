@@ -126,7 +126,7 @@ class EmployeeRepository(AbstractRepository):
             item = result.fetchone()
 
             if item:
-                item = EmployeeVO(item)
+                item = EmployeeVO(**item)
 
         except Exception as err:
             self.logger.error(err)
