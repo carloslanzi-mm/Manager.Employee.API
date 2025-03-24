@@ -1,6 +1,8 @@
 from flambda_app.config import get_config
+from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger
 from flambda_app.services.v1.employee_service import EmployeeService
+from flambda_app.vos.employee import EmployeeVO
 
 
 class EmployeeManager:
@@ -43,8 +45,8 @@ class EmployeeManager:
             raise self.exception
         return data
 
-    def create(self, request: dict):
-        data = self.employee_service.create(request)
+    def create(self, request: ApiResponse) -> EmployeeVO:
+        data = self.employee_service.create(request.to_dict())
         if (data is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception

@@ -14,7 +14,7 @@ class EmployeeRepository(AbstractRepository):
     def __init__(self, logger=None, mysql_connection=None):
         super().__init__(logger, mysql_connection)
 
-    def create(self, employee: EmployeeVO):
+    def create(self, employee: EmployeeVO) -> bool:
         keys = list(employee.to_dict().keys())
         # Remover a PK
         keys.remove(self.PK)
@@ -39,7 +39,7 @@ class EmployeeRepository(AbstractRepository):
             self.connection.commit()
 
             # Em caso de sucesso, retorne True
-            return True
+            created = True
 
         except Exception as err:
             self.logger.error(err)

@@ -1032,7 +1032,7 @@ def company_delete(id) -> Response:
 # employee
 # *************
 @APP.route(API_ROOT + '/v1/employee', methods=['POST'])
-def employee_create():
+def employee_create() -> Response:
     """
     Company create route
 
@@ -1078,7 +1078,7 @@ def employee_create():
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.create(request.to_dict()))
+        response.set_data(manager.create(request))
         # response.set_total(manager.count(request))
 
         # hateos

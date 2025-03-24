@@ -145,10 +145,11 @@ class EmployeeService:
 
         return data
 
-    def create(self, request: dict):
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+    def create(self, request_formatted: dict) -> EmployeeVO:
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
 
-        data = request['where']
+        data = request_formatted['where']
         if self.DEBUG:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
@@ -156,12 +157,11 @@ class EmployeeService:
             if data == dict():
                 raise ValidationException(MessagesEnum.REQUEST_ERROR)
 
-            employee_vo = EmployeeVO(data)
+            employee_vo = EmployeeVO(**data)
             created = self.employee_repository.create(employee_vo)
 
             if created:
-                # convert to vo and prepare for api response
-                data = employee_vo.to_api_response()
+                data = employee_vo
             else:
                 data = None
                 # set exception if it happens
