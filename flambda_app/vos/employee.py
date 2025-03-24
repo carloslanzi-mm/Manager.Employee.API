@@ -1,5 +1,6 @@
-import uuid
+import uuid as python_uuid
 from datetime import datetime
+from typing import Dict, Optional, Any
 
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
 
@@ -8,23 +9,45 @@ class EmployeeVO:
     """
     Value Object for Employee
     """
+    id: Optional[int]
+    uuid: str
+    company_id: Optional[int]
+    name: Optional[str]
+    hourly_rate: Optional[float]
+    is_admin: bool
+    is_active: bool
+    created_at: str
+    updated_at: Optional[str]
+    deleted_at: Optional[str]
 
-    def __init__(self, data: dict = None, default_values=True):
-        """
-        Initialize the EmployeeVO object with the given data or set default values.
-        """
-        self.id = data.get('id') if data and "id" in data else None
-        self.uuid = data.get('uuid') if data and "uuid" in data \
-            else str(uuid.uuid4()) if default_values else None
-        self.company_id = data.get('company_id') if data and "company_id" in data else None
-        self.name = data.get('name') if data and "name" in data else None
-        self.hourly_rate = data.get('hourly_rate') if data and "hourly_rate" in data else None
-        self.is_admin = data.get('is_admin') if data and "is_admin" in data else False
-        self.is_active = data.get('is_active') if data and "is_active" in data else True
-        self.created_at = data.get('created_at') if data and 'created_at' in data \
-            else datetime.now().isoformat() if default_values else None
-        self.updated_at = data.get('updated_at') if data and 'updated_at' in data else None
-        self.deleted_at = data.get('deleted_at') if data and 'deleted_at' in data else None
+    def __init__(
+        self,
+        id: Optional[int] = None,
+        uuid: Optional[str] = None,
+        company_id: Optional[int] = None,
+        name: Optional[str] = None,
+        hourly_rate: Optional[float] = None,
+        is_admin: bool = False,
+        is_active: bool = True,
+        created_at: Optional[str] = None,
+        updated_at: Optional[str] = None,
+        deleted_at: Optional[str] = None,
+        **kwargs: Any
+    ):
+        self.id = id
+        self.uuid = uuid or str(python_uuid.uuid4())
+        self.company_id = company_id
+        self.name = name
+        self.hourly_rate = hourly_rate
+        self.is_admin = is_admin
+        self.is_active = is_active
+        self.created_at = created_at or datetime.now().isoformat()
+        self.updated_at = updated_at
+        self.deleted_at = deleted_at
+
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     def __str__(self):
         """
@@ -34,7 +57,7 @@ class EmployeeVO:
                f"hourly_rate={self.hourly_rate}, is_admin={self.is_admin}, is_active={self.is_active}, " \
                f"created_at={self.created_at}, updated_at={self.updated_at}, deleted_at={self.deleted_at})"
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Optional[str]]:
         """
         Converts the EmployeeVO to a dictionary.
         """
@@ -72,7 +95,7 @@ class EmployeeVO:
         if 'deleted_at' in data:
             self.deleted_at = data['deleted_at']
 
-    def get_company_name(self):
+    def get_company_name(self) -> Optional[str]:
         """Busca o nome da empresa usando CompanyService se não estiver no dicionário."""
         if not self.company_id:
             return None
@@ -81,7 +104,7 @@ class EmployeeVO:
         company_data = company_repository.get(value=self.company_id, key='id', fields=['name'])
         return company_data.name if company_data else None
 
-    def to_api_response(self):
+    def to_api_response(self) -> Dict[str, str]:
         """
         Convert EmployeeVO to a response format.
         """
