@@ -165,12 +165,10 @@ class CompanyService:
             if data == dict():
                 raise ValidationException(MessagesEnum.REQUEST_ERROR)
 
-            company_vo = CompanyVO(data)
+            company_vo = CompanyVO(**data)
             created = self.company_repository.create(company_vo)
 
             if created:
-                # convert to vo and prepare for api response
-                # data = company_vo.to_api_response()
                 data = company_vo
 
             else:
@@ -184,15 +182,16 @@ class CompanyService:
 
         return data
 
-    def update(self, request: dict, uuid):
+    def update(self, request_formatted: dict, uuid) -> CompanyVO:
 
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
 
         original_company = self.company_repository.get(uuid, key=self.company_repository.PK)
         if original_company is None:
             raise DatabaseException(MessagesEnum.FIND_ERROR)
 
-        data = request['where']
+        data = request_formatted['where']
         if self.DEBUG:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
@@ -209,7 +208,9 @@ class CompanyService:
             if data == dict():
                 raise ValidationException(MessagesEnum.REQUEST_ERROR)
 
-            updated_at = helper.datetime_now_with_timezone()
+            # updated_at = helper.datetime_now_with_timezone()
+            updated_at = helper.datetime_now_with_timezone().replace(tzinfo=None).isoformat(sep=' ')
+
             data.update({'updated_at': updated_at})
 
             company_vo = data

@@ -52,8 +52,8 @@ class CompanyManager:
             raise self.exception
         return data
 
-    def update(self, request: dict, uuid):
-        data = self.company_service.update(request, uuid)
+    def update(self, request: ApiRequest, uuid) -> CompanyVO:
+        data = self.company_service.update(request.to_dict(), uuid)
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
