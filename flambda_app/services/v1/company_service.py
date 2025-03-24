@@ -233,9 +233,10 @@ class CompanyService:
 
         return data
 
-    def delete(self, request: dict, uuid):
+    def delete(self, request_formatted: dict, uuid) -> CompanyVO:
 
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
         result = False
 
         original_company = self.company_repository.get(uuid, key=self.company_repository.PK)

@@ -59,8 +59,8 @@ class CompanyManager:
             raise self.exception
         return data
 
-    def delete(self, request: dict, uuid):
-        result = self.company_service.delete(request, uuid)
+    def delete(self, request: ApiRequest, uuid: int) -> CompanyVO:
+        result = self.company_service.delete(request.to_dict(), uuid)
         if (result is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception

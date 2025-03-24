@@ -964,7 +964,7 @@ def company_get(id) -> Response:
 
 
 @APP.route('/v1/company/<id>', methods=['DELETE'])
-def company_delete(id):
+def company_delete(id) -> Response:
     """
     Company delete route
 
@@ -1013,7 +1013,7 @@ def company_delete(id):
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = {"deleted": manager.delete(request.to_dict(), id)}
+        data = {"deleted": manager.delete(request, id)}
         response.set_data(data)
         # response.set_total(manager.count(request))
     except CustomException as error:
