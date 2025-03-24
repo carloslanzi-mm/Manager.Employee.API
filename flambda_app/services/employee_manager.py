@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from flambda_app.config import get_config
 from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger
@@ -24,22 +26,22 @@ class EmployeeManager:
         self.DEBUG = flag
         self.employee_service.debug(self.DEBUG)
 
-    def list(self, request: dict):
-        data = self.employee_service.list(request)
+    def list(self, request: ApiResponse) -> EmployeeVO:
+        data = self.employee_service.list(request.to_dict())
         if (data is None or len(data) == 0) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception
         return data
 
-    def count(self, request: dict):
-        total = self.employee_service.count(request)
+    def count(self, request: ApiResponse) -> int:
+        total = self.employee_service.count(request.to_dict())
         if self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception
         return total
 
-    def get(self, request: dict, id):
-        data = self.employee_service.get(request, id)
+    def get(self, request: ApiResponse, id: int) -> Dict[str, Any]:
+        data = self.employee_service.get(request.to_dict(), id)
         if (data is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception
@@ -52,7 +54,7 @@ class EmployeeManager:
             raise self.exception
         return data
 
-    def update(self, request: ApiResponse, id: int):
+    def update(self, request: ApiResponse, id: int) -> EmployeeVO:
         data = self.employee_service.update(request.to_dict(), id)
         if (data is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception

@@ -1245,9 +1245,9 @@ def employee_list():
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = manager.list(request.to_dict())
+        data = manager.list(request)
         response.set_data(data)
-        response.set_total(manager.count(request.to_dict()))
+        response.set_total(manager.count(request))
 
         # hateos
         response.links = None
@@ -1322,7 +1322,7 @@ def employee_get(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.get(request.to_dict(), id))
+        response.set_data(manager.get(request, id))
 
         # hateos
         set_hateos_links(request, response, id)

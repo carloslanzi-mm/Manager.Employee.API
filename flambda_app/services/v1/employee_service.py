@@ -1,4 +1,6 @@
 import copy
+from typing import Dict, Any, Optional, List, NoReturn
+
 from flambda_app import helper
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector
@@ -47,31 +49,29 @@ class EmployeeService:
         if self.REDIS_ENABLED:
             self.redis_employee_repository.debug = self.DEBUG
 
-    def list(self, request: dict):
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+    def list(self, request_formatted: Dict[str, Any]) -> List[Dict[str, Any]]:
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
 
-        data = []
-        where = request['where']
+        data: List[Dict[str, Any]] = []
+        where = request_formatted['where']
 
         # exclude deleted
         where['deleted_at'] = None
 
         try:
-            offset = request['offset']
-            limit = request['limit']
-            order_by = request['order_by']
-            sort_by = request['sort_by']
-            fields = request['fields']
+            offset = request_formatted['offset']
+            limit = request_formatted['limit']
+            order_by = request_formatted['order_by']
+            sort_by = request_formatted['sort_by']
+            fields = request_formatted['fields']
             data = self.employee_repository.list(
                 where=where, offset=offset, limit=limit, order_by=order_by,
                 sort_by=sort_by, fields=fields)
 
             # convert to vo and prepare for api response
             if data:
-                vo_data = []
-                for item in data:
-                    vo_data.append(EmployeeVO(item, default_values=False).to_api_response())
-                data = vo_data
+                data = [EmployeeVO(**item).to_api_response() for item in data]
 
             # set exception if it happens
             if self.employee_repository.get_exception():
@@ -83,7 +83,7 @@ class EmployeeService:
 
         return data
 
-    def count(self, request: dict):
+    def count(self, request: Dict[str, Any]) -> int:
         self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
 
         total = 0
@@ -107,12 +107,12 @@ class EmployeeService:
 
         return total
 
-    def find(self, request: dict):
+    def find(self, request: Dict[str, Any]) -> NoReturn:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
         raise ServiceException(MessagesEnum.METHOD_NOT_IMPLEMENTED_ERROR)
 
-    def get(self, request: dict, id):
+    def get(self, request: Dict[str, Any], id: int) -> Optional[Dict[str, Any]]:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
 
