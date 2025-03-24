@@ -217,12 +217,11 @@ class EmployeeService:
 
         return data
 
-    def delete(self, request: dict, id):
+    def delete(self, request: Dict[str, Any], id: int) -> bool:
         self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
         result = False
 
-        original_employee = self.employee_repository.get(id,
-                                                         key=self.employee_repository.PK)
+        original_employee = self.employee_repository.get(id, key=self.employee_repository.PK)
         if original_employee is None:
             raise DatabaseException(MessagesEnum.FIND_ERROR)
 

@@ -1166,7 +1166,7 @@ def employee_update(id) -> Response:
 
 
 @APP.route(API_ROOT + '/v1/employee', methods=['GET'])
-def employee_list():
+def employee_list() -> Response:
     """
     Employee list route
 
@@ -1266,7 +1266,7 @@ def employee_list():
 
 
 @APP.route(API_ROOT + '/v1/employee/<id>', methods=['GET'])
-def employee_get(id):
+def employee_get(id) -> Response:
     """
     Employee get route
 
@@ -1341,7 +1341,7 @@ def employee_get(id):
 
 
 @APP.route('/v1/employee/<id>', methods=['DELETE'])
-def employee_delete(id):
+def employee_delete(id) -> Response:
     """
     Employee delete route
 
@@ -1390,7 +1390,7 @@ def employee_delete(id):
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = {"deleted": manager.delete(request.to_dict(), id)}
+        data = {"deleted": manager.delete(request, id)}
         response.set_data(data)
         # response.set_total(manager.count(request))
     except CustomException as error:

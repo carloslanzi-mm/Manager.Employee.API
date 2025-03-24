@@ -61,8 +61,8 @@ class EmployeeManager:
             raise self.exception
         return data
 
-    def delete(self, request: dict, id):
-        result = self.employee_service.delete(request, id)
+    def delete(self, request: ApiResponse, id: int) -> bool:
+        result = self.employee_service.delete(request.to_dict(), id)
         if (result is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception
