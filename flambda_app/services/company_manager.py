@@ -38,8 +38,8 @@ class CompanyManager:
             raise self.exception
         return total
 
-    def get(self, request: dict, id):
-        data = self.company_service.get(request, id)
+    def get(self, request: ApiRequest, id: int):
+        data = self.company_service.get(request.to_dict(), id)
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception

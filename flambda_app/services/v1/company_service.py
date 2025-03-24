@@ -76,7 +76,7 @@ class CompanyService:
             if data:
                 vo_data = []
                 for item in data:
-                    vo_data.append(CompanyVO(item, default_values=False).to_api_response())
+                    vo_data.append(CompanyVO(**item).to_api_response())
                 data = vo_data
 
             # set exception if it happens
@@ -119,18 +119,18 @@ class CompanyService:
                          .format(get_function_name(), request))
         raise ServiceException(MessagesEnum.METHOD_NOT_IMPLEMENTED_ERROR)
 
-    def get(self, request: dict, id):
+    def get(self, request_formatted: dict, id: int) -> CompanyVO:
         self.logger.info('method: {} - request: {}'
-                         .format(get_function_name(), request))
+                         .format(get_function_name(), request_formatted))
 
         self.logger.info('method: {} - uuid: {}'
                          .format(get_function_name(), id))
 
         data = []
-        where = request['where']
+        where = request_formatted['where']
 
         try:
-            fields = request['fields']
+            fields = request_formatted['fields']
             value = id
             data = self.company_repository.get(
                 value, key=self.company_repository.PK, where=where, fields=fields
@@ -140,8 +140,8 @@ class CompanyService:
                 self.logger.info('data: {}'.format(data))
 
             # convert to vo and prepare for api response
-            if data:
-                data = CompanyVO(data, default_values=False).to_api_response()
+            if data and isinstance(data, dict):
+                data = CompanyVO(**data).to_api_response()
 
             # set exception if it happens
             if self.company_repository.get_exception():

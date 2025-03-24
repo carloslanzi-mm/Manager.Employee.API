@@ -889,7 +889,7 @@ def company_list() -> Response:
 
 
 @APP.route(API_ROOT + '/v1/company/<id>', methods=['GET'])
-def company_get(id):
+def company_get(id) -> Response:
     """
     Company get route
 
@@ -945,7 +945,7 @@ def company_get(id):
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.get(request.to_dict(), id))
+        response.set_data(manager.get(request, id))
 
         # hateos
         set_hateos_links(request, response, id)

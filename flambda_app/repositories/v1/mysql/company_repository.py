@@ -127,7 +127,7 @@ class CompanyRepository(AbstractRepository):
             item = result.fetchone()
 
             if item:
-                item = CompanyVO(item)
+                item = CompanyVO(**item)
 
         except Exception as err:
             self.logger.error(err)
