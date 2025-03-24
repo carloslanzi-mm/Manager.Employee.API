@@ -1,15 +1,29 @@
 import uuid as python_uuid
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 
 class CompanyVO:
     """
     Value Object for Company
     """
-    def __init__(self, name: str, id: Optional[int] = None, uuid: Optional[str] = None,
-                 created_at: Optional[str] = None, updated_at: Optional[str] = None,
-                 deleted_at: Optional[str] = None):
+    id: Optional[int]
+    uuid: str
+    name: Optional[str]
+    created_at: str
+    updated_at: Optional[str]
+    deleted_at: Optional[str]
+
+    def __init__(
+        self,
+        id: Optional[int] = None,
+        uuid: Optional[str] = None,
+        name: Optional[str] = None,
+        created_at: Optional[str] = None,
+        updated_at: Optional[str] = None,
+        deleted_at: Optional[str] = None,
+        **kwargs: Any
+    ):
 
         self.id = id
         self.uuid = uuid or str(python_uuid.uuid4())
@@ -17,6 +31,10 @@ class CompanyVO:
         self.created_at = created_at or datetime.now().isoformat()
         self.updated_at = updated_at
         self.deleted_at = deleted_at
+
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     def __str__(self):
         """
@@ -26,17 +44,17 @@ class CompanyVO:
                f"created_at={self.created_at}, updated_at={self.updated_at}, " \
                f"deleted_at={self.deleted_at})"
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> Dict[str, Optional[str]]:
         """
         Converts the CompanyVO to a dictionary.
         """
         return {
             'id': self.id,
             'uuid': self.uuid,
-            'name': str(self.name) if self.name is not None else None,
-            'created_at': str(self.created_at) if self.created_at is not None else None,
-            'updated_at': str(self.updated_at) if self.updated_at is not None else None,
-            'deleted_at': str(self.deleted_at) if self.deleted_at is not None else None
+            'name': self.name,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'deleted_at': self.deleted_at
         }
 
     def update(self, data: dict):
