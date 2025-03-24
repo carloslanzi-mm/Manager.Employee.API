@@ -1,6 +1,8 @@
 from flambda_app.config import get_config
 from flambda_app.logging import get_logger
 from flambda_app.services.v1.company_service import CompanyService
+from flambda_app.http_resources.request import ApiRequest
+from flambda_app.vos.company import CompanyVO
 
 
 class CompanyManager:
@@ -43,8 +45,8 @@ class CompanyManager:
             raise self.exception
         return data
 
-    def create(self, request: dict):
-        data = self.company_service.create(request)
+    def create(self, request: ApiRequest) -> CompanyVO:
+        data = self.company_service.create(request.to_dict())
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception

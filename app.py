@@ -6,6 +6,7 @@ import base64
 import os
 
 import boot
+from flask import Response
 from flambda_app import APP_NAME, APP_VERSION, http_helper
 from flambda_app import helper
 from flambda_app.config import get_config
@@ -656,8 +657,9 @@ def product_soft_update(uuid):
 # *************
 # company
 # *************
+
 @APP.route(API_ROOT + '/v1/company', methods=['POST'])
-def company_create():
+def company_create() -> Response:
     """
     Company create route
 
@@ -703,12 +705,8 @@ def company_create():
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.create(request.to_dict()))
-        # response.set_total(manager.count(request))
+        response.set_data(manager.create(request))
 
-        # hateos
-        # set_hateos_links(request, response, uuid)
-        # set_hateos_meta(request, response, uuid)
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -722,7 +720,7 @@ def company_create():
 
 
 @APP.route('/v1/company/<id>', methods=['PATCH'])
-def company_update(id):
+def company_update(id) -> Response:
     """
     Company update route
 
@@ -1454,7 +1452,6 @@ spec.path(view=employee_update,
           path="/v1/employee/{uuid}", operations=get_doc(employee_update))
 spec.path(view=employee_delete,
           path="/v1/employee/{uuid}", operations=get_doc(employee_delete))
-
 
 print_routes(APP, LOGGER)
 LOGGER.info(f'Running at {ENV}')

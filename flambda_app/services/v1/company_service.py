@@ -152,10 +152,11 @@ class CompanyService:
 
         return data
 
-    def create(self, request: dict):
-        self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
+    def create(self, request_formatted: dict) -> CompanyVO:
+        self.logger.info('method: {} - request: {}'.format(
+            get_function_name(), request_formatted))
 
-        data = request['where']
+        data = request_formatted['where']
         if self.DEBUG:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
@@ -169,7 +170,9 @@ class CompanyService:
 
             if created:
                 # convert to vo and prepare for api response
-                data = company_vo.to_api_response()
+                # data = company_vo.to_api_response()
+                data = company_vo
+
             else:
                 data = None
                 # set exception if it happens
