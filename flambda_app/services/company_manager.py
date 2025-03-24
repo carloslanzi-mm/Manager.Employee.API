@@ -1,3 +1,5 @@
+from typing import Union, List, Optional
+
 from flambda_app.config import get_config
 from flambda_app.logging import get_logger
 from flambda_app.services.v1.company_service import CompanyService
@@ -24,42 +26,42 @@ class CompanyManager:
         self.DEBUG = flag
         self.company_service.debug(self.DEBUG)
 
-    def list(self, request: ApiRequest) -> CompanyVO:
+    def list(self, request: ApiRequest) -> List[Union[CompanyVO, dict]]:
         data = self.company_service.list(request.to_dict())
         if (data is None or len(data) == 0) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
-        return data
+        return data if data is not None else []
 
-    def count(self, request: ApiRequest) -> CompanyVO:
+    def count(self, request: ApiRequest) -> int:
         total = self.company_service.count(request.to_dict())
         if self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
         return total
 
-    def get(self, request: ApiRequest, id: int):
+    def get(self, request: ApiRequest, id: int) -> Optional[dict]:
         data = self.company_service.get(request.to_dict(), id)
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
         return data
 
-    def create(self, request: ApiRequest) -> CompanyVO:
+    def create(self, request: ApiRequest) -> Optional[CompanyVO]:
         data = self.company_service.create(request.to_dict())
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
         return data
 
-    def update(self, request: ApiRequest, uuid) -> CompanyVO:
-        data = self.company_service.update(request.to_dict(), uuid)
+    def update(self, request: ApiRequest, id: str) -> Optional[dict]:
+        data = self.company_service.update(request.to_dict(), id)
         if (data is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
         return data
 
-    def delete(self, request: ApiRequest, uuid: int) -> CompanyVO:
+    def delete(self, request: ApiRequest, uuid: int) -> bool:
         result = self.company_service.delete(request.to_dict(), uuid)
         if (result is None) and self.company_service.exception:
             self.exception = self.company_service.exception

@@ -1,3 +1,5 @@
+from typing import Union, List, NoReturn, Optional
+
 from flambda_app import helper
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector
@@ -48,7 +50,7 @@ class CompanyService:
         if self.REDIS_ENABLED:
             self.redis_company_repository.debug = self.DEBUG
 
-    def list(self, request_formatted: dict) -> CompanyVO:
+    def list(self, request_formatted: dict) -> List[Union[CompanyVO, dict]]:
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
@@ -74,10 +76,7 @@ class CompanyService:
 
             # convert to vo and prepare for api response
             if data:
-                vo_data = []
-                for item in data:
-                    vo_data.append(CompanyVO(**item).to_api_response())
-                data = vo_data
+                data = [CompanyVO(**item).to_api_response() for item in data]
 
             # set exception if it happens
             if self.company_repository.get_exception():
@@ -89,11 +88,11 @@ class CompanyService:
 
         return data
 
-    def count(self, request: dict):
+    def count(self, request: dict) -> int:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
 
-        total = 0
+        total: int = 0
         where = request['where']
         if where == dict():
             where = {
@@ -114,12 +113,12 @@ class CompanyService:
 
         return total
 
-    def find(self, request: dict):
+    def find(self, request: dict) -> NoReturn:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
         raise ServiceException(MessagesEnum.METHOD_NOT_IMPLEMENTED_ERROR)
 
-    def get(self, request_formatted: dict, id: int) -> CompanyVO:
+    def get(self, request_formatted: dict, id: int) -> Optional[dict]:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request_formatted))
 
@@ -153,7 +152,7 @@ class CompanyService:
 
         return data
 
-    def create(self, request_formatted: dict) -> CompanyVO:
+    def create(self, request_formatted: dict) -> Optional[CompanyVO]:
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
@@ -170,20 +169,16 @@ class CompanyService:
             created = self.company_repository.create(company_vo)
 
             if created:
-                data = company_vo
-
+                return company_vo
             else:
-                data = None
-                # set exception if it happens
                 raise DatabaseException(MessagesEnum.CREATE_ERROR)
 
         except Exception as err:
             self.logger.error(err)
             self.exception = err
+            return None
 
-        return data
-
-    def update(self, request_formatted: dict, uuid) -> CompanyVO:
+    def update(self, request_formatted: dict, uuid) -> Optional[dict]:
 
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
@@ -233,7 +228,7 @@ class CompanyService:
 
         return data
 
-    def delete(self, request_formatted: dict, uuid) -> CompanyVO:
+    def delete(self, request_formatted: dict, uuid) -> bool:
 
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
