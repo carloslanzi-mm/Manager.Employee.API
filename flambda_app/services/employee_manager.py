@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from flambda_app.config import get_config
 from flambda_app.http_resources.response import ApiResponse
@@ -26,7 +26,7 @@ class EmployeeManager:
         self.DEBUG = flag
         self.employee_service.debug(self.DEBUG)
 
-    def list(self, request: ApiResponse) -> EmployeeVO:
+    def list(self, request: ApiResponse) -> List[Dict[str, Any]]:
         data = self.employee_service.list(request.to_dict())
         if (data is None or len(data) == 0) and self.employee_service.exception:
             self.exception = self.employee_service.exception
