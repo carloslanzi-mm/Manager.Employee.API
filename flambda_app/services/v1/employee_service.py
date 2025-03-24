@@ -112,7 +112,7 @@ class EmployeeService:
                          .format(get_function_name(), request))
         raise ServiceException(MessagesEnum.METHOD_NOT_IMPLEMENTED_ERROR)
 
-    def get(self, request: Dict[str, Any], id: int) -> Optional[Dict[str, Any]]:
+    def get(self, request: Dict[str, Any], id: str) -> Optional[Dict[str, Any]]:
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
 
@@ -145,7 +145,7 @@ class EmployeeService:
 
         return data
 
-    def create(self, request_formatted: dict) -> EmployeeVO:
+    def create(self, request_formatted: dict) -> Optional[EmployeeVO]:
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
@@ -173,7 +173,7 @@ class EmployeeService:
 
         return data
 
-    def update(self, request_formatted: dict, id: int) -> EmployeeVO:
+    def update(self, request_formatted: dict, id: str) -> Optional[dict]:
         self.logger.info(
             'method: {} - request: {}'.format(get_function_name(), request_formatted))
 
@@ -217,7 +217,7 @@ class EmployeeService:
 
         return data
 
-    def delete(self, request: Dict[str, Any], id: int) -> bool:
+    def delete(self, request: Dict[str, Any], id: str) -> bool:
         self.logger.info('method: {} - request: {}'.format(get_function_name(), request))
         result = False
 

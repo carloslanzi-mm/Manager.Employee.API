@@ -720,7 +720,7 @@ def company_create() -> Response:
 
 
 @APP.route('/v1/company/<id>', methods=['PATCH'])
-def company_update(id) -> Response:
+def company_update(id: str) -> Response:
     """
     Company update route
 
@@ -889,7 +889,7 @@ def company_list() -> Response:
 
 
 @APP.route(API_ROOT + '/v1/company/<id>', methods=['GET'])
-def company_get(id) -> Response:
+def company_get(id: str) -> Response:
     """
     Company get route
 
@@ -964,7 +964,7 @@ def company_get(id) -> Response:
 
 
 @APP.route('/v1/company/<id>', methods=['DELETE'])
-def company_delete(id) -> Response:
+def company_delete(id: str) -> Response:
     """
     Company delete route
 
@@ -1097,7 +1097,7 @@ def employee_create() -> Response:
 
 
 @APP.route('/v1/employee/<id>', methods=['PATCH'])
-def employee_update(id) -> Response:
+def employee_update(id: str) -> Response:
     """
     Employee update route
 
@@ -1266,7 +1266,7 @@ def employee_list() -> Response:
 
 
 @APP.route(API_ROOT + '/v1/employee/<id>', methods=['GET'])
-def employee_get(id) -> Response:
+def employee_get(id: str) -> Response:
     """
     Employee get route
 
@@ -1341,7 +1341,7 @@ def employee_get(id) -> Response:
 
 
 @APP.route('/v1/employee/<id>', methods=['DELETE'])
-def employee_delete(id) -> Response:
+def employee_delete(id: str) -> Response:
     """
     Employee delete route
 
@@ -1382,7 +1382,7 @@ def employee_delete(id) -> Response:
                     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
-
+    import pdb; pdb.set_trace()
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
