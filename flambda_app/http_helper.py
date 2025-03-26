@@ -48,7 +48,7 @@ def create_response(body=None, status_code=None, headers=None):
             status_code = 400
         return Response(response=str(body), status=status_code, headers=headers)
     else:
-        if 'Content-Type' in headers and headers['Content-Type']=='application/json':
+        if 'Content-Type' in headers and headers['Content-Type'] == 'application/json':
             body = helper.to_json(body)
         return Response(response=body, status=status_code, headers=headers)
 

@@ -1,3 +1,7 @@
+"""
+Módulo responsável por gerenciar operações relacionadas ao funcionario.
+"""
+
 from datetime import datetime
 from flambda_app.request_control import Order, Pagination, PaginationType
 from flambda_app.repositories.v1.mysql import AbstractRepository
@@ -5,6 +9,15 @@ from flambda_app.vos.employee import EmployeeVO
 
 
 class EmployeeRepository(AbstractRepository):
+    """Repository class for managing Employee data.
+
+    Attributes:
+        BASE_TABLE (str): The name of the employee table.
+        BASE_SCHEMA (str): The database schema where the table is located.
+        BASE_TABLE_ALIAS (str): The alias used for the employee table in queries.
+        PK (str): The primary key column of the employee table.
+        UUID_KEY (str): The UUID key column of the employee table.
+    """
     BASE_TABLE = 'employee'
     BASE_SCHEMA = 'store'
     BASE_TABLE_ALIAS = 'e'
@@ -12,9 +25,24 @@ class EmployeeRepository(AbstractRepository):
     UUID_KEY = 'uuid'
 
     def __init__(self, logger=None, mysql_connection=None):
+        """Initializes the EmployeeRepository.
+
+        Args:
+            logger (optional): Logger instance for logging messages. Defaults to None.
+            mysql_connection (optional): MySQL connection instance for database operations.
+            Defaults to None.
+        """
         super().__init__(logger, mysql_connection)
 
     def create(self, employee: EmployeeVO) -> bool:
+        """Inserts a new employee record into the database.
+
+        Args:
+            employee (EmployeeVO): The employee data to insert.
+
+        Returns:
+            bool: True if the record was successfully inserted, otherwise False.
+        """
         keys = list(employee.to_dict().keys())
         # Remover a PK
         keys.remove(self.PK)
@@ -32,7 +60,7 @@ class EmployeeRepository(AbstractRepository):
 
         # Tentando criar
         try:
-            created = self._execute(sql, values)
+            self._execute(sql, values)
             # Pegando o último id inserido
             employee.id = self.connection.insert_id()
             # Commit
@@ -54,6 +82,16 @@ class EmployeeRepository(AbstractRepository):
         return created
 
     def update(self, employee: EmployeeVO, value, key=None):
+        """Updates an existing employee record in the database.
+
+        Args:
+            employee (EmployeeVO): The employee data to update.
+            value: The value of the key used to identify the record.
+            key (str, optional): The column name to filter the update. Defaults to the primary key.
+
+        Returns:
+            bool: True if the record was successfully updated, otherwise False.
+        """
         key_type = '%s'
         if key is None:
             key = self.PK
@@ -67,10 +105,10 @@ class EmployeeRepository(AbstractRepository):
         # Preparando os valores
         values = []
         update_data = []
-        for k, v in employee.to_dict().items():
-            if k in keys:
-                update_data.append('{}.{}=%s'.format(self.BASE_TABLE_ALIAS, k))
-                values.append(v)
+        for k_key, v_value in employee.to_dict().items():
+            if k_key in keys:
+                update_data.append('{}.{}=%s'.format(self.BASE_TABLE_ALIAS, k_key))
+                values.append(v_value)
 
         update_str = ",".join(update_data)
         # Query
@@ -101,6 +139,18 @@ class EmployeeRepository(AbstractRepository):
         return updated
 
     def get(self, value, key=None, where: dict = None, fields: list = None):
+        """Retrieves an employee record from the database based on specified conditions.
+
+        Args:
+            value: The value of the key used to filter the record.
+            key (str, optional): The column name to filter the query. Defaults to the primary key.
+            where (dict, optional): Additional conditions to filter the query. Defaults to None.
+            fields (list, optional): Specific fields to retrieve. Defaults to all fields ('*').
+
+        Returns:
+            EmployeeVO or None: The employee record as an EmployeeVO
+            object if found, otherwise None.
+        """
         key_type = '%s'
         if key is None:
             key = self.PK
@@ -111,7 +161,7 @@ class EmployeeRepository(AbstractRepository):
         if fields is None or len(fields) == 0:
             fields = '*'
         else:
-            fields = [self.BASE_TABLE_ALIAS + '.' + v for v in fields]
+            fields = [self.BASE_TABLE_ALIAS + '.' + v_value for v_value in fields]
             fields = ",".join(fields)
 
         sql = "SELECT {} FROM {} as {} WHERE {} = {}".format(
@@ -138,10 +188,25 @@ class EmployeeRepository(AbstractRepository):
 
     def list(self, where: dict, offset=None, limit=None, fields: list = None, sort_by=None,
              order_by=None):
+        """Retrieves a list of employee records from the database with optional filtering, sorting,
+        and pagination.
+
+        Args:
+            where (dict): Conditions to filter the query results.
+            offset (int, optional): The starting point for pagination. Defaults to None.
+            limit (int, optional): The maximum number of records to retrieve. Defaults to None.
+            fields (list, optional): Specific fields to retrieve. Defaults to all fields ('*').
+            sort_by (str or list, optional): The field(s) to sort the results by.
+            Defaults to the primary key.
+            order_by (str, optional): The sort order ('ASC' or 'DESC'). Defaults to 'ASC'.
+
+        Returns:
+            list: A list of employee records (or an empty list if no records found).
+        """
         if fields is None or len(fields) == 0:
             fields = '*'
         else:
-            fields = [self.BASE_TABLE_ALIAS + '.' + v for v in fields]
+            fields = [self.BASE_TABLE_ALIAS + '.' + v_value for v_value in fields]
             fields = ",".join(fields)
 
         if order_by is None:
@@ -150,7 +215,7 @@ class EmployeeRepository(AbstractRepository):
         if sort_by is None:
             sort_by = self.PK
         elif isinstance(sort_by, list):
-            sort_by_arr = [self.BASE_TABLE_ALIAS + '.' + v for v in sort_by]
+            sort_by_arr = [self.BASE_TABLE_ALIAS + '.' + v_value for v_value in sort_by]
             sort_by = ",".join(sort_by_arr)
         else:
             sort_by = self.BASE_TABLE_ALIAS + '.' + sort_by
@@ -184,25 +249,45 @@ class EmployeeRepository(AbstractRepository):
         return result
 
     def build_where(self, where):
+        """Builds a WHERE clause for SQL queries based on the provided conditions.
+
+        Args:
+            where (dict): A dictionary where keys are column names and values are the conditions.
+
+        Returns:
+            str: The WHERE clause as a string, formatted with proper SQL syntax.
+        """
         where_list = []
-        for k, v in where.items():
-            if v is None:
-                where_value = '{} IS NULL'.format(self.BASE_TABLE_ALIAS + "." + k)
+        for k_key, v_value in where.items():
+            if v_value is None:
+                where_value = '{} IS NULL'.format(self.BASE_TABLE_ALIAS + "." + k_key)
             else:
-                where_value = '{} = {}'.format(self.BASE_TABLE_ALIAS + "." + k,
-                                               '"{}"'.format(v) if isinstance(v, str) else v)
+                where_value = '{} = {}'.format(self.BASE_TABLE_ALIAS + "." + k_key,
+                                               '"{}"'.format(v_value) if isinstance(v_value, str)
+                                               else v_value)
             where_list.append(where_value)
         where_str = " AND ".join(where_list)
         return where_str
 
     def count(self, where: dict, sort_by=None, order_by=None):
+        """Counts the number of employee records in the database based on specified conditions.
+
+        Args:
+            where (dict): Conditions to filter the query results.
+            sort_by (str or list, optional): The field(s) to sort the results by.
+            Defaults to the primary key.
+            order_by (str, optional): The sort order ('ASC' or 'DESC'). Defaults to 'ASC'.
+
+        Returns:
+            int: The total number of records that match the specified conditions.
+        """
         if order_by is None:
             order_by = Order.ASC
 
         if sort_by is None:
             sort_by = self.PK
         elif isinstance(sort_by, list):
-            sort_by_arr = [self.BASE_TABLE_ALIAS + '.' + v for v in sort_by]
+            sort_by_arr = [self.BASE_TABLE_ALIAS + '.' + v_value for v_value in sort_by]
             sort_by = ",".join(sort_by_arr)
         else:
             sort_by = self.BASE_TABLE_ALIAS + '.' + sort_by
@@ -230,6 +315,15 @@ class EmployeeRepository(AbstractRepository):
         return result
 
     def soft_delete(self, value, key=None):
+        """Marks an employee record as deleted by setting the 'deleted_at' timestamp.
+
+        Args:
+            value: The value of the key used to identify the record to be deleted.
+            key (str, optional): The column name to filter the update. Defaults to the primary key.
+
+        Returns:
+            bool: True if the record was successfully marked as deleted, otherwise False.
+        """
         key_type = '%s'
         if key is None:
             key = self.PK

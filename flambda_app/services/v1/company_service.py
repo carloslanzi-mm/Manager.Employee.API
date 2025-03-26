@@ -1,3 +1,7 @@
+"""
+Módulo responsável por gerenciar operações relacionadas a empresas.
+"""
+
 from typing import Union, List, NoReturn, Optional
 
 from flambda_app import helper
@@ -9,23 +13,32 @@ from flambda_app.filter_helper import filter_xss_injection
 from flambda_app.helper import get_function_name
 from flambda_app.logging import get_logger
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
-# from flambda_app.repositories.v1.redis.company_repository import \
-#     CompanyRepository as RedisCompanyRepository
 from flambda_app.vos.company import CompanyVO
 
 
 class CompanyService:
-    DEBUG = False
+    """
+    Camada de serviço para gerenciamento de operações da Empresa.
+    """
+
+    debug_mode = False
     REDIS_ENABLED = False
 
     def __init__(self, logger=None, mysql_connector=None, redis_connector=None,
-                 company_repository=None,
-                 redis_company_repository=None):
+                 company_repository=None):
+        """
+        Serviço para gerenciar operações relacionadas à empresa.
+
+       Args:
+           logger (Optional[Logger]): Instância do logger.
+           mysql_connector (Optional[MySQLConnector]): Conector do MySQL.
+           redis_connector (Optional[RedisConnector]): Conector do Redis.
+           company_repository (Optional[CompanyRepository]): Repositório de empresas no MySQL.
+       """
         # logger
         self.logger = logger if logger is None else get_logger()
         # database connection
         self.mysql_connector = mysql_connector if mysql_connector is not None else MySQLConnector()
-        # todo passar apenas connector
         # mysql repository
         self.company_repository = company_repository if company_repository is not None \
             else CompanyRepository(mysql_connection=self.mysql_connector.get_connection())
@@ -35,22 +48,35 @@ class CompanyService:
 
         if self.REDIS_ENABLED:
             # redis connection
-            self.redis_connector = redis_connector if redis_connector is not None else RedisConnector()
-            # todo passar apenas connector
+            self.redis_connector = redis_connector if redis_connector is not None \
+                else RedisConnector()
             # redis repository
-            self.redis_company_repository = None  # redis_company_repository if
-            # redis_company_repository is not None \ else RedisCompanyRepository(
-            # redis_connection=self.redis_connector.get_connection())
+            self.redis_company_repository = None
 
-        self.debug(self.DEBUG)
+        self.debug(self.debug_mode)
 
     def debug(self, flag: bool = False):
-        self.DEBUG = flag
-        self.company_repository.debug = self.DEBUG
+        """
+        Ativa ou desativa o modo de depuração.
+
+        Args:
+            flag (bool): Define se o modo de depuração será ativado ou desativado.
+        """
+        self.debug_mode = flag
+        self.company_repository.debug = self.debug_mode
         if self.REDIS_ENABLED:
-            self.redis_company_repository.debug = self.DEBUG
+            self.redis_company_repository.debug = self.debug_mode
 
     def list(self, request_formatted: dict) -> List[Union[CompanyVO, dict]]:
+        """
+        Lista as empresas com base nos filtros fornecidos.
+
+        Args:
+            request_formatted (dict): Filtros e parâmetros da consulta.
+
+        Returns:
+            List[Union[CompanyVO, dict]]: Lista de empresas formatadas para resposta da API.
+        """
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
@@ -82,13 +108,31 @@ class CompanyService:
             if self.company_repository.get_exception():
                 raise DatabaseException(MessagesEnum.LIST_ERROR)
 
-        except Exception as err:
-            self.logger.error(err)
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
             self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
+        except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
+            raise
 
         return data
 
     def count(self, request: dict) -> int:
+        """
+        Conta o número de empresas com base nos filtros fornecidos.
+
+        Args:
+            request (dict): Filtros e parâmetros da consulta.
+
+        Returns:
+            int: Total de empresas encontradas.
+        """
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
 
@@ -107,35 +151,64 @@ class CompanyService:
             sort_by = request['sort_by']
             total = self.company_repository.count(
                 where=where, order_by=order_by, sort_by=sort_by)
+
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
+            self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
         except Exception as err:
             self.logger.error(err)
             self.exception = DatabaseException(MessagesEnum.LIST_ERROR)
+            raise
 
         return total
 
     def find(self, request: dict) -> NoReturn:
+        """
+        Método não implementado para busca de empresas.
+
+        Args:
+            request (dict): Parâmetros da requisição.
+
+        Raises:
+            ServiceException: Exceção indicando que o método não foi implementado.
+        """
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request))
         raise ServiceException(MessagesEnum.METHOD_NOT_IMPLEMENTED_ERROR)
 
-    def get(self, request_formatted: dict, id: int) -> Optional[dict]:
+    def get(self, request_formatted: dict, company_id: str) -> Optional[dict]:
+        """
+        Obtém os dados de uma empresa com base no ID.
+
+        Args:
+            request_formatted (dict): Parâmetros da requisição formatados.
+            company_id (str): ID da empresa.
+
+        Returns:
+            Optional[dict]: Dados da empresa ou None se não encontrada.
+        """
         self.logger.info('method: {} - request: {}'
                          .format(get_function_name(), request_formatted))
 
         self.logger.info('method: {} - uuid: {}'
-                         .format(get_function_name(), id))
+                         .format(get_function_name(), company_id))
 
         data = []
         where = request_formatted['where']
 
         try:
             fields = request_formatted['fields']
-            value = id
+            value = company_id
             data = self.company_repository.get(
                 value, key=self.company_repository.PK, where=where, fields=fields
             )
 
-            if self.DEBUG:
+            if self.debug_mode:
                 self.logger.info('data: {}'.format(data))
 
             # convert to vo and prepare for api response
@@ -146,18 +219,36 @@ class CompanyService:
             if self.company_repository.get_exception():
                 raise DatabaseException(MessagesEnum.FIND_ERROR)
 
-        except Exception as err:
-            self.logger.error(err)
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
             self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
+        except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
+            raise
 
         return data
 
     def create(self, request_formatted: dict) -> Optional[CompanyVO]:
+        """
+        Cria uma nova empresa.
+
+        Args:
+            request_formatted (dict): Dados formatados para criação da empresa.
+
+        Returns:
+            Optional[CompanyVO]: Objeto da empresa criada ou None em caso de erro.
+        """
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
         data = request_formatted['where']
-        if self.DEBUG:
+        if self.debug_mode:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
         try:
@@ -168,18 +259,35 @@ class CompanyService:
             company_vo = CompanyVO(**data)
             created = self.company_repository.create(company_vo)
 
-            if created:
-                return company_vo
-            else:
+            if not created:
                 raise DatabaseException(MessagesEnum.CREATE_ERROR)
 
-        except Exception as err:
-            self.logger.error(err)
+            return company_vo
+
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
             self.exception = err
-            return None
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
+        except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
+            raise
 
     def update(self, request_formatted: dict, uuid) -> Optional[dict]:
+        """
+        Atualiza uma empresa existente.
 
+        Args:
+            request_formatted (dict): Dados formatados para atualização da empresa.
+            uuid: Identificador único da empresa.
+
+        Returns:
+            Optional[dict]: Dados atualizados da empresa ou None em caso de erro.
+        """
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
 
@@ -188,7 +296,7 @@ class CompanyService:
             raise DatabaseException(MessagesEnum.FIND_ERROR)
 
         data = request_formatted['where']
-        if self.DEBUG:
+        if self.debug_mode:
             self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
 
         # validate the request payload
@@ -222,25 +330,43 @@ class CompanyService:
                 # set exception if it happens
                 raise DatabaseException(MessagesEnum.UPDATE_ERROR)
 
-        except Exception as err:
-            self.logger.error(err)
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
             self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
+        except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
+            raise
 
         return data
 
-    def delete(self, request_formatted: dict, uuid) -> bool:
+    def delete(self, request_formatted: dict, company_id: str) -> bool:
+        """
+        Exclui logicamente uma empresa.
 
+        Args:
+            request_formatted (dict): Dados formatados da requisição.
+            company_id (str): Identificador único da empresa.
+
+        Returns:
+            bool: True se a exclusão for bem-sucedida, False caso contrário.
+        """
         self.logger.info('method: {} - request: {}'.format(
             get_function_name(), request_formatted))
         result = False
 
-        original_company = self.company_repository.get(uuid, key=self.company_repository.PK)
+        original_company = self.company_repository.get(company_id, key=self.company_repository.PK)
         if original_company is None:
             raise DatabaseException(MessagesEnum.FIND_ERROR)
 
         try:
 
-            updated = self.company_repository.soft_delete(value=uuid,
+            updated = self.company_repository.soft_delete(value=company_id,
                                                           key=self.company_repository.PK)
 
             if updated:
@@ -249,13 +375,32 @@ class CompanyService:
                 # set exception if it happens
                 raise DatabaseException(MessagesEnum.SOFT_DELETE_ERROR)
 
-        except Exception as err:
-            self.logger.error(err)
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
             self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
+        except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
+            raise
 
         return result
 
     def validate_data(self, data, original_company):
+        """
+        Valida os dados da empresa antes da atualização.
+
+        Args:
+            data (dict): Dados fornecidos para atualização.
+            original_company: Instância original da empresa.
+
+        Raises:
+            ValidationException: Se algum campo inválido for encontrado.
+        """
         allowed_fields = list(original_company.to_dict().keys())
         try:
             allowed_fields.remove(self.company_repository.UUID_KEY)
@@ -263,11 +408,24 @@ class CompanyService:
             allowed_fields.remove('updated_at')
             allowed_fields.remove('created_at')
             allowed_fields.remove('deleted_at')
+
+        except KeyError as err:
+            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
+            self.exception = err
+
+        except DatabaseException as err:
+            self.logger.error(f"Erro no banco de dados: {err}")
+            self.exception = err
+
         except Exception as err:
+            self.logger.exception(f"Erro inesperado: {err}")
+            self.exception = err
             self.logger.error(err)
+            raise
+
         fields = list(data.keys())
         for field in fields:
-            if not field in allowed_fields:
+            if field not in allowed_fields:
                 exception = ValidationException(MessagesEnum.VALIDATION_ERROR)
                 exception.params = [filter_xss_injection(data[field]), filter_xss_injection(field)]
                 exception.set_message_params()

@@ -1,12 +1,15 @@
 import uuid as python_uuid
 from datetime import datetime
 from typing import Dict, Optional, Any
+from base import Base
 
 
-class CompanyVO:
+class CompanyVO(Base):
     """
-    Value Object for Company
+    Object for Company
     """
+    update_allowed_fields = ["name", "created_at", "updated_at", "deleted_at"]
+
     id: Optional[int]
     uuid: str
     name: Optional[str]
@@ -14,18 +17,17 @@ class CompanyVO:
     updated_at: Optional[str]
     deleted_at: Optional[str]
 
-    def __init__(
-        self,
-        id: Optional[int] = None,
-        uuid: Optional[str] = None,
-        name: Optional[str] = None,
-        created_at: Optional[str] = None,
-        updated_at: Optional[str] = None,
-        deleted_at: Optional[str] = None,
-        **kwargs: Any
-    ):
+    def __init__(self,
+                 company_id: Optional[int] = None,
+                 uuid: Optional[str] = None,
+                 name: Optional[str] = None,
+                 created_at: Optional[str] = None,
+                 updated_at: Optional[str] = None,
+                 deleted_at: Optional[str] = None,
+                 **kwargs: Any
+                 ):
 
-        self.id = id
+        self.id = company_id
         self.uuid = uuid or str(python_uuid.uuid4())
         self.name = name
         self.created_at = created_at or datetime.now().isoformat()
@@ -56,19 +58,6 @@ class CompanyVO:
             'updated_at': self.updated_at,
             'deleted_at': self.deleted_at
         }
-
-    def update(self, data: dict):
-        """
-        Update the CompanyVO instance with the provided data.
-        """
-        if 'name' in data:
-            self.name = data['name']
-        if 'created_at' in data:
-            self.created_at = data['created_at']
-        if 'updated_at' in data:
-            self.updated_at = data['updated_at']
-        if 'deleted_at' in data:
-            self.deleted_at = data['deleted_at']
 
     def to_api_response(self) -> Dict[str, str]:
         return {

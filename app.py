@@ -24,10 +24,8 @@ from flambda_app.openapi import spec, get_doc, generate_openapi_yml
 from flambda_app.services.company_manager import CompanyManager
 from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
-from flambda_app.services.product_manager import ProductManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
-from flambda_app.services.v1.product_service import ProductService as ProductServiceV1
 
 # load directly by boot
 ENV = boot.get_environment()
@@ -64,7 +62,8 @@ def index():
     :return: Returns the name and the current version of the project
 
     # pylint: disable=line-too-long
-    See: https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS#Raiz-do-projeto
+    See: https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/
+    2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS#Raiz-do-projeto
 
     :rtype: flask.Response
     """
@@ -80,10 +79,12 @@ def alive():
     :return Returns an intelligent healthcheck that describe what resource are working or not.
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/Guidelines+para+projetos#Health-Check
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
+    Guidelines+para+projetos#Health-Check
 
     # pylint: disable=line-too-long
-    See https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/monitor-app-health
+    See https://docs.microsoft.com/en-us/dotnet/architecture/microservices/
+    implement-resilient-applications/monitor-app-health
 
     :rtype: flask.Response
 
@@ -174,7 +175,8 @@ def docs():
     :return Returns the Swagger UI interface for test operations
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/Guidelines+para+projetos#Swagger
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
+    Guidelines+para+projetos#Swagger
 
     :rtype flask.Response
     """
@@ -194,7 +196,8 @@ def openapi():
     :return Returns the openapi.yml generated the API specification file
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/Guidelines+para+projetos#Swagger
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
+    Guidelines+para+projetos#Swagger
 
     :rtype flask.Response
     """
@@ -204,454 +207,6 @@ def openapi():
     html = html_file.read()
     return http_helper.create_response(
         body=html, status_code=200, headers=headers)
-
-
-# product routes
-@APP.route(API_ROOT + '/v1/product', methods=['GET'])
-def product_list():
-    """
-    Product list route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-
-        ---
-        get:
-            summary: Product List
-            parameters:
-            - name: limit
-              in: query
-              description: "List limit"
-              required: false
-              schema:
-                type: int
-                example: 20
-            - name: offset
-              in: query
-              description: "List offset"
-              required: false
-              schema:
-                type: int
-                example: 0
-            - name: fields
-              in: query
-              description: "Filter fields with comma"
-              required: false
-              schema:
-                type: string
-                example:
-            - name: order_by
-              in: query
-              description: "Ordination of list"
-              required: false
-              schema:
-                type: string
-                enum:
-                 - "asc"
-                 - "desc"
-            - name: sort_by
-              in: query
-              description: "Sorting of the list"
-              required: false
-              schema:
-                type: string
-                example: id
-            responses:
-                200:
-                    description: Success response
-                    content:
-                        application/json:
-                            schema: HateosProductListResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: ProductListErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: ProductListErrorResponseSchema
-        """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(True)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-        data = manager.list(request.to_dict())
-        response.set_data(data)
-        response.set_total(manager.count(request.to_dict()))
-
-        # hateos
-        response.links = None
-        set_hateos_meta(request, response)
-        # LOGGER.info(data)
-        # LOGGER.info(response.data)
-    except CustomException as err:
-        LOGGER.error(err)
-        error = ApiException(MessagesEnum.LIST_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
-
-
-@APP.route(API_ROOT + '/v1/product/<uuid>', methods=['GET'])
-def product_get(uuid):
-    """
-    Product get route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-        ---
-        get:
-            summary: Product Get
-            parameters:
-            - in: path
-              name: uuid
-              description: "Product Id"
-              required: true
-              schema:
-                type: string
-                format: uuid
-                example: 4bcad46b-6978-488f-8153-1c49f8a45244
-            - name: fields
-              in: query
-              description: "Filter fields with comma"
-              required: false
-              schema:
-                type: string
-                example:
-            responses:
-                200:
-                    description: Success response
-                    content:
-                        application/json:
-                            schema: HateosProductGetResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: ProductGetErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: ProductGetErrorResponseSchema
-    """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(True)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-        response.set_data(manager.get(request.to_dict(), uuid))
-
-        # hateos
-        set_hateos_links(request, response, uuid)
-        set_hateos_meta(request, response, uuid)
-
-    except CustomException as error:
-        LOGGER.error(error)
-        if not isinstance(error, ValidationException):
-            error = ApiException(MessagesEnum.FIND_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
-
-
-@APP.route(API_ROOT + '/v1/product', methods=['POST'])
-def product_create():
-    """
-    Product create route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-        ---
-        post:
-            summary: Product Create
-            requestBody:
-                description: 'Product to be created'
-                required: true
-                content:
-                    application/json:
-                        schema: ProductCreateRequestSchema
-            responses:
-                200:
-                    description: Success response
-                    content:
-                        application/json:
-                            schema: ProductCreateResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: ProductCreateErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: ProductCreateErrorResponseSchema
-            """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(False)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-        response.set_data(manager.create(request.to_dict()))
-        # response.set_total(manager.count(request))
-
-        # hateos
-        # set_hateos_links(request, response, uuid)
-        # set_hateos_meta(request, response, uuid)
-    except CustomException as error:
-        LOGGER.error(error)
-        if not isinstance(error, ValidationException):
-            error = ApiException(MessagesEnum.CREATE_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
-
-
-@APP.route('/v1/product/<uuid>', methods=['PUT'])
-def product_update(uuid):
-    """
-    Product update route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-        ---
-        put:
-            summary: Complete Product Update
-            parameters:
-            - in: path
-              name: uuid
-              description: "Product Id"
-              required: true
-              schema:
-                type: string
-                format: uuid
-                example: 4bcad46b-6978-488f-8153-1c49f8a45244
-            requestBody:
-                description: 'Product to be updated'
-                required: true
-                content:
-                    application/json:
-                        schema: ProductCompleteUpdateRequestSchema
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema: ProductUpdateResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: ProductUpdateErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: ProductUpdateErrorResponseSchema
-            """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(False)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-
-        response.set_data(manager.update(request.to_dict(), uuid))
-        # response.set_total(manager.count(request))
-    except CustomException as error:
-        LOGGER.error(error)
-        if not isinstance(error, ValidationException):
-            error = ApiException(MessagesEnum.UPDATE_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
-
-
-@APP.route('/v1/product/<uuid>', methods=['DELETE'])
-def product_delete(uuid):
-    """
-    Product delete route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-            ---
-            delete:
-                summary: Soft Product Delete
-                parameters:
-                - in: path
-                  name: uuid
-                  description: "Product Id"
-                  required: true
-                  schema:
-                    type: string
-                    format: uuid
-                    example: 4bcad46b-6978-488f-8153-1c49f8a45244
-                responses:
-                    200:
-                        description: Success response
-                        content:
-                            application/json:
-                                schema: ProductSoftDeleteResponseSchema
-                    4xx:
-                        description: Error response
-                        content:
-                            application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
-                    5xx:
-                        description: Service fail response
-                        content:
-                            application/json:
-                                schema: ProductSoftDeleteErrorResponseSchema
-                    """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(False)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-        data = {"deleted": manager.delete(request.to_dict(), uuid)}
-        response.set_data(data)
-        # response.set_total(manager.count(request))
-    except CustomException as error:
-        LOGGER.error(error)
-        if not isinstance(error, ValidationException):
-            error = ApiException(MessagesEnum.DELETE_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
-
-
-@APP.route('/v1/product/<uuid>', methods=['PATCH'])
-def product_soft_update(uuid):
-    """
-    Product soft update route
-
-    :return Endpoint with RESTful pattern
-
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
-
-    :rtype flask.Response
-        ---
-        patch:
-            summary: Soft Product Update
-            parameters:
-            - in: path
-              name: uuid
-              description: "Product Id"
-              required: true
-              schema:
-                type: string
-                format: uuid
-                example: 4bcad46b-6978-488f-8153-1c49f8a45244
-            requestBody:
-                description: 'Product field to be updated'
-                required: true
-                content:
-                    application/json:
-                        schema: ProductSoftUpdateRequestSchema
-
-            responses:
-                200:
-                    description: Success response
-                    content:
-                        application/json:
-                            schema: ProductUpdateResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: ProductUpdateErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: ProductUpdateErrorResponseSchema
-                """
-    request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
-
-    status_code = 200
-    response = ApiResponse(request)
-    response.set_hateos(False)
-
-    manager = ProductManager(logger=LOGGER, product_service=ProductServiceV1(logger=LOGGER))
-    manager.debug(DEBUG)
-    try:
-
-        response.set_data(manager.soft_update(request.to_dict(), uuid))
-        # response.set_total(manager.count(request))
-    except CustomException as error:
-        LOGGER.error(error)
-        if not isinstance(error, ValidationException):
-            error = ApiException(MessagesEnum.UPDATE_ERROR)
-        status_code = 400
-        if manager.exception:
-            error = manager.exception
-        response.set_exception(error)
-
-    return response.get_response(status_code)
 
 
 # *************
@@ -666,7 +221,8 @@ def company_create() -> Response:
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -719,15 +275,16 @@ def company_create() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/company/<id>', methods=['PATCH'])
-def company_update(id: str) -> Response:
+@APP.route('/v1/company/<company_id>', methods=['PATCH'])
+def company_update(company_id: str) -> Response:
     """
     Company update route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -774,7 +331,7 @@ def company_update(id: str) -> Response:
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.update(request, id))
+        response.set_data(manager.update(request, company_id))
         # response.set_total(manager.count(request))
     except CustomException as error:
         LOGGER.error(error)
@@ -796,7 +353,8 @@ def company_list() -> Response:
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
 
@@ -888,15 +446,16 @@ def company_list() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/company/<id>', methods=['GET'])
-def company_get(id: str) -> Response:
+@APP.route(API_ROOT + '/v1/company/<company_id>', methods=['GET'])
+def company_get(company_id: str) -> Response:
     """
     Company get route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -945,11 +504,11 @@ def company_get(id: str) -> Response:
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.get(request, id))
+        response.set_data(manager.get(request, company_id))
 
         # hateos
-        set_hateos_links(request, response, id)
-        set_hateos_meta(request, response, id)
+        set_hateos_links(request, response, company_id)
+        set_hateos_meta(request, response, company_id)
 
     except CustomException as error:
         LOGGER.error(error)
@@ -963,15 +522,16 @@ def company_get(id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/company/<id>', methods=['DELETE'])
-def company_delete(id: str) -> Response:
+@APP.route('/v1/company/<company_id>', methods=['DELETE'])
+def company_delete(company_id: str) -> Response:
     """
     Company delete route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
             ---
@@ -1013,7 +573,7 @@ def company_delete(id: str) -> Response:
     manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = {"deleted": manager.delete(request, id)}
+        data = {"deleted": manager.delete(request, company_id)}
         response.set_data(data)
         # response.set_total(manager.count(request))
     except CustomException as error:
@@ -1039,7 +599,8 @@ def employee_create() -> Response:
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -1096,15 +657,16 @@ def employee_create() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/employee/<id>', methods=['PATCH'])
-def employee_update(id: str) -> Response:
+@APP.route('/v1/employee/<employee_id>', methods=['PATCH'])
+def employee_update(employee_id: str) -> Response:
     """
     Employee update route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -1151,7 +713,7 @@ def employee_update(id: str) -> Response:
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.update(request, id))
+        response.set_data(manager.update(request, employee_id))
         # response.set_total(manager.count(request))
     except CustomException as error:
         LOGGER.error(error)
@@ -1173,7 +735,8 @@ def employee_list() -> Response:
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
 
@@ -1265,15 +828,16 @@ def employee_list() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/employee/<id>', methods=['GET'])
-def employee_get(id: str) -> Response:
+@APP.route(API_ROOT + '/v1/employee/<employee_id>', methods=['GET'])
+def employee_get(employee_id: str) -> Response:
     """
     Employee get route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
         ---
@@ -1322,11 +886,11 @@ def employee_get(id: str) -> Response:
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        response.set_data(manager.get(request, id))
+        response.set_data(manager.get(request, employee_id))
 
         # hateos
-        set_hateos_links(request, response, id)
-        set_hateos_meta(request, response, id)
+        set_hateos_links(request, response, employee_id)
+        set_hateos_meta(request, response, employee_id)
 
     except CustomException as error:
         LOGGER.error(error)
@@ -1340,15 +904,16 @@ def employee_get(id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/employee/<id>', methods=['DELETE'])
-def employee_delete(id: str) -> Response:
+@APP.route('/v1/employee/<employee_id>', methods=['DELETE'])
+def employee_delete(employee_id: str) -> Response:
     """
     Employee delete route
 
     :return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/WIP+-+Guidelines+-+RESTful+e+HATEOS
+    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
+    WIP+-+Guidelines+-+RESTful+e+HATEOS
 
     :rtype flask.Response
             ---
@@ -1382,7 +947,6 @@ def employee_delete(id: str) -> Response:
                     """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
-    import pdb; pdb.set_trace()
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
@@ -1390,7 +954,7 @@ def employee_delete(id: str) -> Response:
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        data = {"deleted": manager.delete(request, id)}
+        data = {"deleted": manager.delete(request, employee_id)}
         response.set_data(data)
         # response.set_total(manager.count(request))
     except CustomException as error:
@@ -1409,21 +973,6 @@ def employee_delete(id: str) -> Response:
 # doc
 # *************
 spec.path(view=alive, path=API_ROOT + "/alive", operations=get_doc(alive))
-# *************
-# product
-# *************
-spec.path(view=product_list,
-          path="/v1/product", operations=get_doc(product_list))
-spec.path(view=product_get,
-          path="/v1/product/{uuid}", operations=get_doc(product_get))
-spec.path(view=product_create,
-          path="/v1/product", operations=get_doc(product_create))
-spec.path(view=product_update,
-          path="/v1/product/{uuid}", operations=get_doc(product_update))
-spec.path(view=product_soft_update,
-          path="/v1/product/{uuid}", operations=get_doc(product_soft_update))
-spec.path(view=product_delete,
-          path="/v1/product/{uuid}", operations=get_doc(product_delete))
 
 # *************
 # company
