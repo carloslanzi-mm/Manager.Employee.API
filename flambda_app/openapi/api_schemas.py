@@ -5,8 +5,10 @@ Version: 1.0.0
 from marshmallow import Schema, fields, validate
 
 from flambda_app.enums.messages import MessagesEnum
-from flambda_app.openapi.schemas import DeletionSchema, RequestControlSchema, MetaSchema, LinkSchema, ErrorSchema, \
-    HateosDefaultListResponseSchema, DefaultResponseSchema, HateosDefaultResponseSchema
+from flambda_app.openapi.schemas import (DefaultResponseSchema, DeletionSchema, ErrorSchema,
+                                         HateosDefaultListResponseSchema,
+                                         HateosDefaultResponseSchema, LinkSchema, MetaSchema,
+                                         RequestControlSchema)
 
 
 # ***************************
@@ -54,7 +56,8 @@ class EventGetResponseSchema(Schema):
 
 class EventCreateResponseSchema(Schema):
     result = fields.Bool(example=True)
-    event_hash = fields.Str(example="c82bf3ee20dd2f4ae7109e52d313a3190f1a85ba3362c54d3eb6257bd0c4d69d")
+    event_hash = fields.Str(
+        example="c82bf3ee20dd2f4ae7109e52d313a3190f1a85ba3362c54d3eb6257bd0c4d69d")
     code = fields.Int(example=MessagesEnum.EVENT_REGISTERED_WITH_SUCCESS.code)
     label = fields.String(example=MessagesEnum.EVENT_REGISTERED_WITH_SUCCESS.label)
     message = fields.String(example=MessagesEnum.EVENT_REGISTERED_WITH_SUCCESS.message)
@@ -94,6 +97,7 @@ class CompanySchema(Schema):
     deleted_at = fields.DateTime()
     uuid = fields.UUID(example="4bcad46b-6978-488f-8153-1c49f8a45244")
     active = fields.Int(validate=validate.OneOf([0, 1]))
+
 
 class HateosCompanyListResponseSchema(HateosDefaultListResponseSchema):
     data = fields.List(fields.Nested(CompanySchema))
@@ -177,20 +181,40 @@ class CompanyDeleteErrorResponseSchema(ErrorSchema):
     label = fields.Str(example=MessagesEnum.DELETE_ERROR.label)
     message = fields.Str(example=MessagesEnum.DELETE_ERROR.message)
 
+
 # ***************************
 # Employee
 # ***************************
+class EmployeeSchema(Schema):
+    id = fields.Int(example=1)
+    sku = fields.Int(example=657705)
+    name = fields.Str(
+        example="Guarda Roupa Casal com Espelho 3 Portas de Correr Lara Espresso Móveis")
+    description = fields.Str(
+        example="Guarda Roupa com maior resistência, durabilidade e acabamento, revestimento "
+                "interno e externo. Pintura em estufas modernas com UV (ultra violeta). "
+                "Modelo com corrediça metálica em aço, 4 gavetas espaçosas, perfil em alumínio, "
+                "roldanas de aço carbono com rolamento, divisão ele/ela")
+    supplier_id = fields.Int(example=1)
+    created_at = fields.DateTime()
+    updated_at = fields.DateTime()
+    deleted_at = fields.DateTime()
+    active = fields.Int(validate=validate.OneOf([0, 1]))
+    uuid = fields.UUID(example="4bcad46b-6978-488f-8153-1c49f8a45244")
+
+
 class EmployeeSchema(Schema):
     id = fields.Int(example=1)
     uuid = fields.UUID(example="4bcad46b-6978-488f-8153-1c49f8a45244")
     company_id = fields.Int(example=1001)
     name = fields.Str(example="John Wick")
     hourly_rate = fields.Float(example=25.50)
-    is_admin =  fields.Int(validate=validate.OneOf([0, 1]))
-    is_active =  fields.Int(validate=validate.OneOf([0, 1]))
+    is_admin = fields.Int(validate=validate.OneOf([0, 1]))
+    is_active = fields.Int(validate=validate.OneOf([0, 1]))
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
     deleted_at = fields.DateTime()
+
 
 class HateosEmployeeListResponseSchema(HateosDefaultListResponseSchema):
     data = fields.List(fields.Nested(EmployeeSchema))

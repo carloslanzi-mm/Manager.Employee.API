@@ -87,7 +87,7 @@ class EmployeeManager:
         if (data is None) and self.employee_service.exception:
             self.exception = self.employee_service.exception
             raise self.exception
-        return data
+        return data.to_api_response()
 
     def create(self, request: ApiResponse) -> Optional[EmployeeVO]:
         """

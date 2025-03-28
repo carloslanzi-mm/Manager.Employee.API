@@ -4,16 +4,22 @@ Módulo responsável por gerenciar operações relacionadas ao funcionario.
 
 from typing import Dict, Any, Optional, List, NoReturn
 
+import os
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
 from flambda_app import helper
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector
 from flambda_app.enums.messages import MessagesEnum
-from flambda_app.exceptions import DatabaseException, ValidationException, ServiceException
+from flambda_app.exceptions import DatabaseException, ServiceException, ValidationException
 from flambda_app.filter_helper import filter_xss_injection
 from flambda_app.helper import get_function_name
 from flambda_app.logging import get_logger
 from flambda_app.repositories.v1.mysql.employee_respository import EmployeeRepository
-from flambda_app.vos.employee import EmployeeVO
+from flambda_app.vos.employee import EmployeeTurnstileInputVO, EmployeeVO
 
 
 class EmployeeService:
@@ -239,6 +245,13 @@ class EmployeeService:
 
             if created:
                 data = employee_vo
+                employee_turnstile_input_vo = EmployeeTurnstileInputVO(
+                    employee_vo.to_dict()
+                )
+                # Tavares, rever com Pedro
+                self.employee_turnstile_call(employee_turnstile_input_vo, 'POST')
+                # convert to vo and prepare for api response
+                data = employee_vo.to_api_response()
             else:
                 data = None
                 # set exception if it happens
@@ -297,6 +310,11 @@ class EmployeeService:
                                                       key=self.employee_repository.PK)
 
             if updated:
+                employee_turnstile_input_vo = EmployeeTurnstileInputVO(
+                    employee_vo.to_dict()
+                )
+                self.employee_turnstile_call(employee_turnstile_input_vo, 'PATCH')
+                # convert to vo and prepare for api response
                 data = employee_vo.to_api_response()
             else:
                 data = None
@@ -337,6 +355,10 @@ class EmployeeService:
 
             if updated:
                 result = True
+                employee_turnstile_input_vo = EmployeeTurnstileInputVO(
+                    original_employee.to_dict()
+                )
+                self.employee_turnstile_call(employee_turnstile_input_vo, 'DELETE')
             else:
                 # set exception if it happens
                 raise DatabaseException(MessagesEnum.SOFT_DELETE_ERROR)
@@ -374,3 +396,65 @@ class EmployeeService:
                 exception.params = [filter_xss_injection(data[field]), filter_xss_injection(field)]
                 exception.set_message_params()
                 raise exception
+
+    def employee_turnstile_call(self, employee_turnstile_input_vo: EmployeeTurnstileInputVO, http_method: str = 'POST'):
+        try:
+            session = requests.Session()
+            retry_strategy = Retry(total=3, backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            session.mount("http://", adapter)
+
+            turnstile_data = employee_turnstile_input_vo.to_dict()
+            turnstile_url = os.getenv("TURNSTILE_API_URL", "http://localhost:5000")
+            base_url = f"{turnstile_url}/v1/turnstile"
+
+            # Adiciona o UUID para métodos que precisam dele
+            if http_method.upper() in ['DELETE', 'PUT', 'PATCH']:
+                uuid = turnstile_data.get('uuid')
+                base_url = f"{base_url}/{uuid}"
+
+            # Dicionário com os métodos HTTP disponíveis
+            http_methods = {
+                'POST': lambda: session.post(
+                    base_url,
+                    json=turnstile_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                ),
+                'DELETE': lambda: session.delete(
+                    base_url,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                ),
+                'PUT': lambda: session.put(
+                    base_url,
+                    json=turnstile_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                ),
+                'PATCH': lambda: session.patch(
+                    base_url,
+                    json={
+                        "name": turnstile_data.get("name"),
+                        "is_active": turnstile_data.get("is_active")
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                )
+            }
+
+            method = http_method.upper()
+            if method not in http_methods:
+                raise ValueError(f"Método HTTP não suportado: {http_method}")
+
+            turnstile_response = http_methods[method]()
+
+            if turnstile_response.status_code != 200:
+                self.logger.error(
+                    f"Erro ao {http_method.lower()} registro na catraca: {turnstile_response.text}"
+                )
+
+        except Exception as turnstile_error:
+            self.logger.error(
+                f"Erro ao chamar endpoint da catraca ({http_method}): {str(turnstile_error)}"
+            )
