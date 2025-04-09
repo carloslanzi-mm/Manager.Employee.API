@@ -2,11 +2,9 @@
 
 This module contains the handler method
 """
+
 import base64
 import os
-import socket
-
-import requests
 
 import boot
 from flambda_app import APP_NAME, APP_VERSION, helper, http_helper
@@ -18,8 +16,13 @@ from flambda_app.enums.messages import MessagesEnum
 from flambda_app.exceptions import ApiException, CustomException, ValidationException
 from flambda_app.flambda import Flambda
 from flambda_app.helper import open_vendor_file, print_routes
-from flambda_app.http_helper import (CUSTOM_DEFAULT_HEADERS, get_favicon_16x16_data,
-                                     get_favicon_32x32_data, set_hateos_links, set_hateos_meta)
+from flambda_app.http_helper import (
+    CUSTOM_DEFAULT_HEADERS,
+    get_favicon_16x16_data,
+    get_favicon_32x32_data,
+    set_hateos_links,
+    set_hateos_meta,
+)
 from flambda_app.http_resources.request import ApiRequest
 from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger, set_debug_mode
@@ -29,7 +32,8 @@ from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
-from flambda_app.vos.employee import EmployeeTurnstileInputVO
+from flambda_app.auth.keycloak_auth import keycloak_openid, require_token
+
 
 # load directly by boot
 ENV = boot.get_environment()
@@ -52,8 +56,9 @@ if DEBUG:
     # override to the level desired
     set_debug_mode(LOGGER)
 
-API_ROOT = os.environ['API_ROOT'] if 'API_ROOT' in os.environ else ''
-API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
+APP.keycloak_openid = keycloak_openid
+API_ROOT = os.environ["API_ROOT"] if "API_ROOT" in os.environ else ""
+API_ROOT_ENDPOINT = API_ROOT if API_ROOT != "" or API_ROOT is None else "/"
 
 LOGGER.info("API_ROOT_ENDPOINT: {}".format(API_ROOT_ENDPOINT))
 
@@ -71,11 +76,11 @@ def index():
 
     :rtype: flask.Response
     """
-    body = {"app": f'{APP_NAME}:{APP_VERSION}'}
+    body = {"app": f"{APP_NAME}:{APP_VERSION}"}
     return http_helper.create_response(body=body, status_code=200)
 
 
-@APP.route(API_ROOT + '/alive')
+@APP.route(API_ROOT + "/alive")
 def alive():
     """
     Health check path
@@ -112,12 +117,12 @@ def alive():
                     content:
                         application/json:
                             schema: HealthCheckSchema
-        """
+    """
     service = HealthCheckManager()
     return service.check()
 
 
-@APP.route(API_ROOT + '/favicon-32x32.png')
+@APP.route(API_ROOT + "/favicon-32x32.png")
 def favicon():
     """
     Favicon path
@@ -126,15 +131,15 @@ def favicon():
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "image/png"
+    headers["Content-Type"] = "image/png"
     data = get_favicon_32x32_data()
 
     if helper.is_running_on_lambda():
         data_b64 = {
-            'headers': headers,
-            'statusCode': 200,
-            'body': data,
-            'isBase64Encoded': True
+            "headers": headers,
+            "statusCode": 200,
+            "body": data,
+            "isBase64Encoded": True,
         }
         data = helper.to_json(data_b64)
         headers = {"Content-Type": "application/json"}
@@ -144,7 +149,7 @@ def favicon():
     return http_helper.create_response(body=data, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/favicon-16x16.png')
+@APP.route(API_ROOT + "/favicon-16x16.png")
 def favicon16():
     """
     Favicon path
@@ -153,15 +158,15 @@ def favicon16():
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "image/png"
+    headers["Content-Type"] = "image/png"
     data = get_favicon_16x16_data()
 
     if helper.is_running_on_lambda():
         data_b64 = {
-            'headers': headers,
-            'statusCode': 200,
-            'body': data,
-            'isBase64Encoded': True
+            "headers": headers,
+            "statusCode": 200,
+            "body": data,
+            "isBase64Encoded": True,
         }
         data = helper.to_json(data_b64)
         headers = {"Content-Type": "application/json"}
@@ -171,7 +176,7 @@ def favicon16():
     return http_helper.create_response(body=data, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/docs')
+@APP.route(API_ROOT + "/docs")
 def docs():
     """
     Swagger OpenApi documentation
@@ -185,14 +190,13 @@ def docs():
     :rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "text/html"
-    html_file = open_vendor_file('./public/swagger/index.html', 'r')
+    headers["Content-Type"] = "text/html"
+    html_file = open_vendor_file("./public/swagger/index.html", "r")
     html = html_file.read()
-    return http_helper.create_response(
-        body=html, status_code=200, headers=headers)
+    return http_helper.create_response(body=html, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/openapi.yml')
+@APP.route(API_ROOT + "/openapi.yml")
 def openapi():
     """
     Swagger OpenApi documentation route
@@ -206,18 +210,19 @@ def openapi():
     :rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "text/yaml"
-    html_file = open_vendor_file('./public/swagger/openapi.yml', 'r')
+    headers["Content-Type"] = "text/yaml"
+    html_file = open_vendor_file("./public/swagger/openapi.yml", "r")
     html = html_file.read()
-    return http_helper.create_response(
-        body=html, status_code=200, headers=headers)
+    return http_helper.create_response(body=html, status_code=200, headers=headers)
 
 
 # *************
 # company
 # *************
 
-@APP.route(API_ROOT + '/v1/company', methods=['POST'])
+
+@APP.route(API_ROOT + "/v1/company", methods=["POST"])
+@require_token(required_roles=["admin"])
 def company_create() -> Response:
     """
     Company create route
@@ -256,13 +261,15 @@ def company_create() -> Response:
                             schema: CompanyCreateErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         response.set_data(manager.create(request))
@@ -279,7 +286,7 @@ def company_create() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/company/<company_id>', methods=['PATCH'])
+@APP.route("/v1/company/<company_id>", methods=["PATCH"])
 def company_update(company_id: str) -> Response:
     """
     Company update route
@@ -324,15 +331,17 @@ def company_update(company_id: str) -> Response:
                     content:
                         application/json:
                             schema: CompanyUpdateErrorResponseSchema
-            """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         response.set_data(manager.update(request, company_id))
@@ -349,7 +358,7 @@ def company_update(company_id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/company', methods=['GET'])
+@APP.route(API_ROOT + "/v1/company", methods=["GET"])
 def company_list() -> Response:
     """
     Company list route
@@ -419,15 +428,17 @@ def company_list() -> Response:
                     content:
                         application/json:
                             schema: CompanyListErrorResponseSchema
-        """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(True)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         data = manager.list(request)
@@ -450,7 +461,7 @@ def company_list() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/company/<company_id>', methods=['GET'])
+@APP.route(API_ROOT + "/v1/company/<company_id>", methods=["GET"])
 def company_get(company_id: str) -> Response:
     """
     Company get route
@@ -499,13 +510,15 @@ def company_get(company_id: str) -> Response:
                             schema: CompanyGetErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(True)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         response.set_data(manager.get(request, company_id))
@@ -526,7 +539,7 @@ def company_get(company_id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/company/<company_id>', methods=['DELETE'])
+@APP.route("/v1/company/<company_id>", methods=["DELETE"])
 def company_delete(company_id: str) -> Response:
     """
     Company delete route
@@ -566,15 +579,17 @@ def company_delete(company_id: str) -> Response:
                         content:
                             application/json:
                                 schema: CompanySoftDeleteErrorResponseSchema
-                    """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         data = {"deleted": manager.delete(request, company_id)}
@@ -595,7 +610,7 @@ def company_delete(company_id: str) -> Response:
 # *************
 # employee
 # *************
-@APP.route(API_ROOT + '/v1/employee', methods=['POST'])
+@APP.route(API_ROOT + "/v1/employee", methods=["POST"])
 def employee_create() -> Response:
     """
     Company create route
@@ -634,13 +649,15 @@ def employee_create() -> Response:
                             schema: CompanyCreateErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager = EmployeeManager(
+        logger=LOGGER, employee_service=EmployeeService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         created_employee = manager.create(request)
@@ -658,7 +675,7 @@ def employee_create() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/employee/<employee_id>', methods=['PATCH'])
+@APP.route("/v1/employee/<employee_id>", methods=["PATCH"])
 def employee_update(employee_id: str) -> Response:
     """
     Employee update route
@@ -703,19 +720,23 @@ def employee_update(employee_id: str) -> Response:
                     content:
                         application/json:
                             schema: EmployeeUpdateErrorResponseSchema
-            """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager = EmployeeManager(
+        logger=LOGGER, employee_service=EmployeeService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         # Primeiro obtém os dados do funcionário antes de deletar
-        employee_data = manager.get(request, employee_id) # Tavares, mostrar que dentro do update
+        employee_data = manager.get(
+            request, employee_id
+        )  # Tavares, mostrar que dentro do update
         # já faz o GET
         updated_employee = manager.update(request, employee_id)
         response.set_data(updated_employee)
@@ -731,7 +752,7 @@ def employee_update(employee_id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/employee', methods=['GET'])
+@APP.route(API_ROOT + "/v1/employee", methods=["GET"])
 def employee_list() -> Response:
     """
     Employee list route
@@ -801,15 +822,17 @@ def employee_list() -> Response:
                     content:
                         application/json:
                             schema: EmployeeListErrorResponseSchema
-        """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(True)
 
-    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager = EmployeeManager(
+        logger=LOGGER, employee_service=EmployeeService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         data = manager.list(request)
@@ -832,7 +855,7 @@ def employee_list() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/employee/<employee_id>', methods=['GET'])
+@APP.route(API_ROOT + "/v1/employee/<employee_id>", methods=["GET"])
 def employee_get(employee_id: str) -> Response:
     """
     Employee get route
@@ -881,13 +904,15 @@ def employee_get(employee_id: str) -> Response:
                             schema: EmployeeGetErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(True)
 
-    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager = EmployeeManager(
+        logger=LOGGER, employee_service=EmployeeService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         response.set_data(manager.get(request, employee_id))
@@ -908,7 +933,7 @@ def employee_get(employee_id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route('/v1/employee/<employee_id>', methods=['DELETE'])
+@APP.route("/v1/employee/<employee_id>", methods=["DELETE"])
 def employee_delete(employee_id: str) -> Response:
     """
     Employee delete route
@@ -948,14 +973,16 @@ def employee_delete(employee_id: str) -> Response:
                         content:
                             application/json:
                                 schema: EmployeeSoftDeleteErrorResponseSchema
-                    """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
+    manager = EmployeeManager(
+        logger=LOGGER, employee_service=EmployeeService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         # Tavares
@@ -990,33 +1017,39 @@ spec.path(view=alive, path=API_ROOT + "/alive", operations=get_doc(alive))
 # *************
 # company
 # *************
-spec.path(view=company_list,
-          path="/v1/company", operations=get_doc(company_list))
-spec.path(view=company_get,
-          path="/v1/company/{uuid}", operations=get_doc(company_get))
-spec.path(view=company_create,
-          path="/v1/company", operations=get_doc(company_create))
-spec.path(view=company_update,
-          path="/v1/company/{uuid}", operations=get_doc(company_update))
-spec.path(view=company_delete,
-          path="/v1/company/{uuid}", operations=get_doc(company_delete))
+spec.path(view=company_list, path="/v1/company", operations=get_doc(company_list))
+spec.path(view=company_get, path="/v1/company/{uuid}", operations=get_doc(company_get))
+spec.path(view=company_create, path="/v1/company", operations=get_doc(company_create))
+spec.path(
+    view=company_update, path="/v1/company/{uuid}", operations=get_doc(company_update)
+)
+spec.path(
+    view=company_delete, path="/v1/company/{uuid}", operations=get_doc(company_delete)
+)
 
 # *************
 # employee
 # *************
-spec.path(view=employee_list,
-          path="/v1/employee", operations=get_doc(employee_list))
-spec.path(view=employee_get,
-          path="/v1/employee/{uuid}", operations=get_doc(employee_get))
-spec.path(view=employee_create,
-          path="/v1/employee", operations=get_doc(employee_create))
-spec.path(view=employee_update,
-          path="/v1/employee/{uuid}", operations=get_doc(employee_update))
-spec.path(view=employee_delete,
-          path="/v1/employee/{uuid}", operations=get_doc(employee_delete))
+spec.path(view=employee_list, path="/v1/employee", operations=get_doc(employee_list))
+spec.path(
+    view=employee_get, path="/v1/employee/{uuid}", operations=get_doc(employee_get)
+)
+spec.path(
+    view=employee_create, path="/v1/employee", operations=get_doc(employee_create)
+)
+spec.path(
+    view=employee_update,
+    path="/v1/employee/{uuid}",
+    operations=get_doc(employee_update),
+)
+spec.path(
+    view=employee_delete,
+    path="/v1/employee/{uuid}",
+    operations=get_doc(employee_delete),
+)
 
 print_routes(APP, LOGGER)
-LOGGER.info(f'Running at {ENV}')
+LOGGER.info(f"Running at {ENV}")
 
 # generate de openapi.yml
 generate_openapi_yml(spec, LOGGER, force=True)

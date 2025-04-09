@@ -1,9 +1,9 @@
 import uuid as python_uuid
 from datetime import datetime
 from typing import Dict, Optional, Any
-from base import Base
 
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
+from flambda_app.vos.base import Base
 
 
 class EmployeeVO(Base):
@@ -12,8 +12,14 @@ class EmployeeVO(Base):
     """
 
     update_allowed_fields = [
-        "company_id", "name", "hourly_rate", "is_admin",
-        "is_active", "created_at", "updated_at", "deleted_at"
+        "company_id",
+        "name",
+        "hourly_rate",
+        "is_admin",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "deleted_at",
     ]
 
     employee_id: Optional[int]
@@ -27,19 +33,20 @@ class EmployeeVO(Base):
     updated_at: Optional[str]
     deleted_at: Optional[str]
 
-    def __init__(self,
-                 employee_id: Optional[int] = None,
-                 uuid: Optional[str] = None,
-                 company_id: Optional[int] = None,
-                 name: Optional[str] = None,
-                 hourly_rate: Optional[float] = None,
-                 is_admin: bool = False,
-                 is_active: bool = True,
-                 created_at: Optional[str] = None,
-                 updated_at: Optional[str] = None,
-                 deleted_at: Optional[str] = None,
-                 **kwargs: Any
-                 ):
+    def __init__(
+        self,
+        employee_id: Optional[int] = None,
+        uuid: Optional[str] = None,
+        company_id: Optional[int] = None,
+        name: Optional[str] = None,
+        hourly_rate: Optional[float] = None,
+        is_admin: bool = False,
+        is_active: bool = True,
+        created_at: Optional[str] = None,
+        updated_at: Optional[str] = None,
+        deleted_at: Optional[str] = None,
+        **kwargs: Any,
+    ):
 
         self.id = employee_id
         self.uuid = uuid or str(python_uuid.uuid4())
@@ -60,26 +67,28 @@ class EmployeeVO(Base):
         """
         String representation of the EmployeeVO instance.
         """
-        return f"EmployeeVO(id={self.id}, uuid={self.uuid}, company_id={self.company_id}, " \
-               f"name={self.name}, hourly_rate={self.hourly_rate}, is_admin={self.is_admin}, " \
-               f"is_active={self.is_active}, created_at={self.created_at}, " \
-               f"updated_at={self.updated_at}, deleted_at={self.deleted_at})"
+        return (
+            f"EmployeeVO(id={self.id}, uuid={self.uuid}, company_id={self.company_id}, "
+            f"name={self.name}, hourly_rate={self.hourly_rate}, is_admin={self.is_admin}, "
+            f"is_active={self.is_active}, created_at={self.created_at}, "
+            f"updated_at={self.updated_at}, deleted_at={self.deleted_at})"
+        )
 
     def to_dict(self) -> Dict[str, Optional[str]]:
         """
         Converts the EmployeeVO to a dictionary.
         """
         return {
-            'id': self.id,
-            'uuid': self.uuid,
-            'company_id': self.company_id,
-            'name': self.name,
-            'hourly_rate': self.hourly_rate,
-            'is_admin': self.is_admin,
-            'is_active': self.is_active,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
-            'deleted_at': self.deleted_at
+            "id": self.id,
+            "uuid": self.uuid,
+            "company_id": self.company_id,
+            "name": self.name,
+            "hourly_rate": self.hourly_rate,
+            "is_admin": self.is_admin,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "deleted_at": self.deleted_at,
         }
 
     def get_company_name(self) -> Optional[str]:
@@ -88,7 +97,9 @@ class EmployeeVO(Base):
             return None
 
         company_repository = CompanyRepository()
-        company_data = company_repository.get(value=self.company_id, key='id', fields=['name'])
+        company_data = company_repository.get(
+            value=self.company_id, key="id", fields=["name"]
+        )
         return company_data.name if company_data else None
 
     def to_api_response(self) -> Dict[str, str]:
@@ -103,7 +114,7 @@ class EmployeeVO(Base):
             "name": self.name,
             "hourly_rate": self.hourly_rate,
             "is_admin": self.is_admin,
-            "is_active": self.is_active
+            "is_active": self.is_active,
         }
 
 
