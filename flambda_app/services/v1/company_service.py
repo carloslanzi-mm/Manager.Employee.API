@@ -13,7 +13,10 @@ from flambda_app.filter_helper import filter_xss_injection
 from flambda_app.helper import get_function_name
 from flambda_app.logging import get_logger
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
+from flambda_app.vos.address import Address
 from flambda_app.vos.company import CompanyVO
+from flambda_app.vos.document import Document
+from flambda_app.vos.file import File
 
 
 class CompanyService:
@@ -211,9 +214,26 @@ class CompanyService:
             if self.debug_mode:
                 self.logger.info('data: {}'.format(data))
 
-            # convert to vo and prepare for api response
-            if data and isinstance(data, dict):
-                data = CompanyVO(**data).to_api_response()
+            if data and isinstance(data, CompanyVO):
+                files = self.company_repository.list_entities(
+                    "files", File, where={"company_id": data.id, "deleted_at": None},
+                    sort_by="created_at",
+                    order_by="DESC"
+                )
+
+                documents = self.company_repository.list_entities(
+                    "documents", Document, where={"company_id": data.id, "deleted_at": None},
+                    sort_by="created_at",
+                    order_by="DESC"
+                )
+
+                address = self.company_repository.get_entity(
+                    'address', Address, company_id, 'company_id', where={'deleted_at': None})
+
+                return {"company": data,
+                        "files": files,
+                        "documents": documents,
+                        "address": address}
 
             # set exception if it happens
             if self.company_repository.get_exception():
@@ -234,7 +254,7 @@ class CompanyService:
 
         return data
 
-    def create(self, request_formatted: dict) -> Optional[CompanyVO]:
+    def create(self, request_formatted: dict):  #-> Optional[CompanyVO, Address]:
         """
         Cria uma nova empresa.
 
@@ -256,13 +276,18 @@ class CompanyService:
             if data == dict():
                 raise ValidationException(MessagesEnum.REQUEST_ERROR)
 
-            company_vo = CompanyVO(**data)
-            created = self.company_repository.create(company_vo)
+            company_data = data.get("company")
+            address_data = data.get("address")
+
+            company_obj = CompanyVO(**company_data)
+            address_obj = Address(**address_data)
+            # created = self.company_repository.create(company_vo)
+            created = self.company_repository.create_with_address(company_obj, address_obj)
 
             if not created:
                 raise DatabaseException(MessagesEnum.CREATE_ERROR)
 
-            return company_vo
+            return company_obj, address_obj
 
         except KeyError as err:
             self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
@@ -277,64 +302,66 @@ class CompanyService:
             self.exception = err
             raise
 
-    def update(self, request_formatted: dict, employee_id) -> Optional[dict]:
+    def update(self, request_formatted: dict, company_id):
         """
         Atualiza uma empresa existente.
 
         Args:
             request_formatted (dict): Dados formatados para atualização da empresa.
-            employee_id: Identificador único da empresa.
+            company_id: Identificador único da empresa.
 
         Returns:
-            Optional[dict]: Dados atualizados da empresa ou None em caso de erro.
+            Optional[tuple]: Dados atualizados da empresa e endereço, ou
+            (None, None) em caso de erro.
         """
-        self.logger.info('method: {} - request: {}'.format(
-            get_function_name(), request_formatted))
-
-        original_company = self.company_repository.get(employee_id, key=self.company_repository.PK)
-        if original_company is None:
-            raise DatabaseException(MessagesEnum.FIND_ERROR)
-
-        data = request_formatted['where']
-        if self.debug_mode:
-            self.logger.info('method: {} - data: {}'.format(get_function_name(), data))
-
-        # validate the request payload
-        self.validate_data(data, original_company)
-
-        # update original company with update data
-        original_company.update(data)
-
-        data = original_company
+        self.logger.info(f'method: {get_function_name()} - request: {request_formatted}')
 
         try:
+            original_company = self.company_repository.get_entity(
+                'company', CompanyVO, company_id, 'id', where={'deleted_at': None})
+            original_address = self.company_repository.get_entity(
+                'address', Address, company_id, 'company_id', where={'deleted_at': None})
 
-            if data == dict():
-                raise ValidationException(MessagesEnum.REQUEST_ERROR)
+            if not original_company or not original_address:
+                raise DatabaseException(MessagesEnum.FIND_ERROR)
+
+            data = request_formatted.get('where', {})
+            company_data = data.get('company')
+            address_data = data.get('address')
 
             updated_at = helper.datetime_now_with_timezone().replace(tzinfo=None).isoformat(sep=' ')
 
-            data.update({'updated_at': updated_at})
+            if self.debug_mode:
+                self.logger.info(f'method: {get_function_name()} - data: {data}')
 
-            company_vo = data
+            if company_data:
+                self.validate_data(company_data, original_company)
+                original_company.update(company_data)
+                original_company.updated_at = updated_at
 
-            updated = self.company_repository.update(company_vo, employee_id,
-                                                     key=self.company_repository.PK)
+            if address_data:
+                self.validate_data(address_data, original_address)
+                original_address.update(address_data)
+                original_address.updated_at = updated_at
 
-            if updated:
-                # convert to vo and prepare for api response
-                data = company_vo.to_api_response()
-            else:
-                data = None
-                # set exception if it happens
-                raise DatabaseException(MessagesEnum.UPDATE_ERROR)
+            if not company_data and not address_data:
+                raise ValidationException(MessagesEnum.REQUEST_ERROR)
 
-        except KeyError as err:
-            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
-            self.exception = err
+            company_updated = self.company_repository.update_entity(
+                original_company, 'company', 'id', company_id
+            )
 
-        except DatabaseException as err:
-            self.logger.error(f"Erro no banco de dados: {err}")
+            address_updated = self.company_repository.update_entity(
+                original_address, 'address', 'company_id', company_id
+            )
+
+            if company_updated and address_updated:
+                return original_company, original_address
+
+            raise DatabaseException(MessagesEnum.UPDATE_ERROR)
+
+        except (KeyError, ValidationException, DatabaseException) as err:
+            self.logger.error(f"Erro conhecido: {err}")
             self.exception = err
 
         except Exception as err:
@@ -342,7 +369,7 @@ class CompanyService:
             self.exception = err
             raise
 
-        return data
+        return None, None
 
     def delete(self, request_formatted: dict, company_id: str) -> bool:
         """
@@ -389,43 +416,51 @@ class CompanyService:
 
         return result
 
-    def validate_data(self, data, original_company):
+    def validate_data(self, data: dict, original_entity):
         """
-        Valida os dados da empresa antes da atualização.
+        Valida os dados de entrada comparando com os campos permitidos do objeto original.
 
         Args:
             data (dict): Dados fornecidos para atualização.
-            original_company: Instância original da empresa.
+            original_entity: Instância original do objeto (VO).
 
         Raises:
             ValidationException: Se algum campo inválido for encontrado.
         """
-        allowed_fields = list(original_company.to_dict().keys())
         try:
-            allowed_fields.remove(self.company_repository.UUID_KEY)
-            allowed_fields.remove(self.company_repository.PK)
-            allowed_fields.remove('updated_at')
-            allowed_fields.remove('created_at')
-            allowed_fields.remove('deleted_at')
+            allowed_fields = list(original_entity.to_dict().keys())
+            fields_to_ignore = ['created_at', 'updated_at', 'deleted_at']
 
-        except KeyError as err:
-            self.logger.error(f"Erro ao acessar chave do dicionário: {err}")
+            if hasattr(self.company_repository, 'PK'):
+                fields_to_ignore.append(self.company_repository.PK)
+            if hasattr(self.company_repository, 'UUID_KEY'):
+                fields_to_ignore.append(self.company_repository.UUID_KEY)
+
+            # Remove os campos a ignorar, se existirem na lista
+            allowed_fields = [f for f in allowed_fields if f not in fields_to_ignore]
+
+            # Validação de campos
+            for field in data.keys():
+                if field not in allowed_fields:
+                    exception = ValidationException(MessagesEnum.VALIDATION_ERROR)
+                    exception.params = [
+                        filter_xss_injection(data[field]),
+                        filter_xss_injection(field)
+                    ]
+                    exception.set_message_params()
+                    raise exception
+
+        except (KeyError, AttributeError, TypeError) as err:
+            self.logger.error(f"Erro ao validar dados: {err}")
             self.exception = err
+            raise
 
         except DatabaseException as err:
             self.logger.error(f"Erro no banco de dados: {err}")
             self.exception = err
-
-        except Exception as err:
-            self.logger.exception(f"Erro inesperado: {err}")
-            self.exception = err
-            self.logger.error(err)
             raise
 
-        fields = list(data.keys())
-        for field in fields:
-            if field not in allowed_fields:
-                exception = ValidationException(MessagesEnum.VALIDATION_ERROR)
-                exception.params = [filter_xss_injection(data[field]), filter_xss_injection(field)]
-                exception.set_message_params()
-                raise exception
+        except Exception as err:
+            self.logger.exception("Erro inesperado durante a validação de dados.")
+            self.exception = err
+            raise

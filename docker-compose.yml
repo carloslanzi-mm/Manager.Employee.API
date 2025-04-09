@@ -11,6 +11,8 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
       AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      REGION_NAME: us-east-1
+      LOCALSTACK_ENDPOINT: http://localstack:4566
       TEST_ENV: ${TEST_ENV}
       DB_HOST: "mysql"
       DB_PORT: 3306

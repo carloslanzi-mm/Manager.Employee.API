@@ -6,6 +6,7 @@ from datetime import datetime
 
 from flambda_app.request_control import Order, Pagination, PaginationType
 from flambda_app.repositories.v1.mysql import AbstractRepository
+from flambda_app.vos.address import Address
 from flambda_app.vos.company import CompanyVO
 
 
@@ -42,6 +43,30 @@ class CompanyRepository(AbstractRepository):
             mysql_connection (Optional[MySQLConnector]): Instância da conexão com MySQL.
         """
         super().__init__(logger, mysql_connection)
+
+    # Tavares
+    def create_with_address(self, company: CompanyVO, address: Address):
+        """
+        Cria a empresa e, se bem-sucedido, insere o endereço associado.
+
+        Args:
+            company (CompanyVO): Objeto representando a empresa.
+            address (Address): Objeto representando o endereço da empresa.
+
+        Returns:
+            Tuple[bool, Optional[int]]: Retorna um tuple com:
+                - `True` se ambos os registros forem inseridos com sucesso.
+                - O ID da empresa criada.
+        """
+        created, company_id = self.create(company)
+        if not created:
+            return False
+
+        address.company_id = company_id
+
+        created, address_id = self.create_entity(address, "address", "id")
+
+        return created if created else False
 
     def create(self, company: CompanyVO):
         """
@@ -83,19 +108,16 @@ class CompanyRepository(AbstractRepository):
             self.connection.commit()
 
             # Em caso de sucesso, retorne True
-            return True
+            return True, company.id
 
         except Exception as err:
             self.logger.error(err)
             self.connection.rollback()
             self._exception = err
-            created = False
+            return False, None
 
         finally:
             self._close()
-
-        # Retorne False apenas em caso de falha
-        return created
 
     def update(self, company: CompanyVO, value, key=None):
         """

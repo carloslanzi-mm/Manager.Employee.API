@@ -1,7 +1,7 @@
 import uuid as python_uuid
 from datetime import datetime
 from typing import Dict, Optional, Any
-from base import Base
+from .base import Base
 
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
 

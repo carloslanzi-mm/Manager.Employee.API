@@ -98,6 +98,11 @@ class S3:
                         self.connection = connection
         return connection
 
+    @staticmethod
+    def get_public_url(bucket_name, object_name):
+        endpoint = 'http://localhost:4566'
+        return f"{endpoint}/{bucket_name}/{object_name}"
+
     def upload_filedata(self, bucket_name, data, object_name):
         if self.connection is None:
             self.connect()
@@ -107,7 +112,11 @@ class S3:
 
         try:
             bucket = s3.Bucket(bucket_name)
-            bucket.upload_fileobj(data, object_name)
+            bucket.upload_fileobj(
+                Fileobj=data,
+                Key=object_name,
+                ExtraArgs={'ACL': 'public-read'}
+            )
             response = s3.ObjectSummary(bucket_name, object_name)
         except Exception as err:
             self.logger.error(err)
@@ -166,17 +175,20 @@ class S3:
         if self.connection is None:
             self.connect()
         s3 = self.connection
+
         if bucket_name is None:
             raise Exception('Bucket must be informed')
 
         try:
-            # Get the file
-            response = s3.create_bucket(
-                Bucket=bucket_name,
-                CreateBucketConfiguration={
-                    'LocationConstraint': self.config.REGION_NAME
-                },
-            )
+            region = self.config.get("REGION_NAME")
+
+            if region == "us-east-1":
+                response = s3.create_bucket(Bucket=bucket_name)
+            else:
+                response = s3.create_bucket(
+                    Bucket=bucket_name,
+                    CreateBucketConfiguration={"LocationConstraint": region},
+                )
 
         except Exception as err:
             self.logger.error(err)
@@ -204,6 +216,15 @@ class S3:
             response = None
 
         return response
+
+    def delete_object(self, bucket_name, object_name):
+        if self.connection is None:
+            self.connect()
+        try:
+            self.connection.Object(bucket_name, object_name).delete()
+        except Exception as err:
+            self.logger.error(f"Erro ao deletar objeto {object_name}: {err}")
+            raise
 
     def list_objects(self, bucket_name, max_keys=1000):
         if self.connection is None:

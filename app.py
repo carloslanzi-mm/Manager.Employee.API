@@ -4,15 +4,11 @@ This module contains the handler method
 """
 import base64
 import os
-import socket
-
-import requests
 
 import boot
-from flambda_app import APP_NAME, APP_VERSION, helper, http_helper
-from flask import Response
-from flambda_app import APP_NAME, APP_VERSION, http_helper
-from flambda_app import helper
+from flask import request as flask_request, jsonify, Response
+from flambda_app.aws.s3 import S3
+from flambda_app import APP_NAME, APP_VERSION, http_helper, helper
 from flambda_app.config import get_config
 from flambda_app.enums.messages import MessagesEnum
 from flambda_app.exceptions import ApiException, CustomException, ValidationException
@@ -27,14 +23,16 @@ from flambda_app.openapi import api_schemas, generate_openapi_yml, get_doc, spec
 from flambda_app.services.company_manager import CompanyManager
 from flambda_app.services.employee_manager import EmployeeManager
 from flambda_app.services.healthcheck_manager import HealthCheckManager
+from flambda_app.services.report_manager import ReportManager
+from flambda_app.services.upload_manager import UploadManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
-from flambda_app.vos.employee import EmployeeTurnstileInputVO
+from flambda_app.services.v1.report_service import ReportService
+from flambda_app.services.v1.upload_service import UploadService
 
 # load directly by boot
 ENV = boot.get_environment()
-# boot.load_dot_env(ENV)
-
+boot.load_dot_env(ENV)
 
 # config
 CONFIG = get_config()
@@ -51,6 +49,10 @@ APP.logger = LOGGER
 if DEBUG:
     # override to the level desired
     set_debug_mode(LOGGER)
+
+s3 = S3(config=CONFIG, logger=LOGGER)
+s3.connect()
+s3.create_bucket(CONFIG.get('APP_BUCKET'))
 
 API_ROOT = os.environ['API_ROOT'] if 'API_ROOT' in os.environ else ''
 API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
@@ -80,7 +82,7 @@ def alive():
     """
     Health check path
 
-    :return Returns an intelligent healthcheck that describe what resource are working or not.
+    return Returns an intelligent healthcheck that describe what resource are working or not.
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
@@ -122,7 +124,7 @@ def favicon():
     """
     Favicon path
 
-    :return Returns a favicon for the browser with size 32x32
+    return Returns a favicon for the browser with size 32x32
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
@@ -149,7 +151,7 @@ def favicon16():
     """
     Favicon path
 
-    :return Returns a favicon for the browser with size 16x16
+    return Returns a favicon for the browser with size 16x16
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
@@ -176,13 +178,13 @@ def docs():
     """
     Swagger OpenApi documentation
 
-    :return Returns the Swagger UI interface for test operations
+    return Returns the Swagger UI interface for test operations
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
     Guidelines+para+projetos#Swagger
 
-    :rtype flask.Response
+    rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
     headers['Content-Type'] = "text/html"
@@ -197,13 +199,13 @@ def openapi():
     """
     Swagger OpenApi documentation route
 
-    :return Returns the openapi.yml generated the API specification file
+    return Returns the openapi.yml generated the API specification file
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2226749441/
     Guidelines+para+projetos#Swagger
 
-    :rtype flask.Response
+    rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
     headers['Content-Type'] = "text/yaml"
@@ -217,44 +219,163 @@ def openapi():
 # company
 # *************
 
-@APP.route(API_ROOT + '/v1/company', methods=['POST'])
-def company_create() -> Response:
-    """
-    Company create route
 
-    :return Endpoint with RESTful pattern
+@APP.route(f"{API_ROOT}/v1/report/<int:report_id>", methods=["POST"])
+def send_email_report(report_id: int):
+    # REFATORAR QUANDO O PO (DIEGO) TRAZER MAIS INFORMAÇÕES SOBRE O RELATÓRIO
+    # REFATORAR PARA O FLUXO PADRÃO: APP.PY -> MANAGER.PY -> SERVICE.PY -> MANAGER.PY -> APP.PY
+    from flambda_app.services.v1.email_service import EmailService
+    from flambda_app.repositories.v1.mysql.report_repository import ReportRepository
+    from flambda_app.reports.generator import ReportGenerator
+    from flambda_app.reports.headers import REPORT_HEADERS
+    from flambda_app.vos.report import Report
 
-    # pylint: disable=line-too-long
-    See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
-    WIP+-+Guidelines+-+RESTful+e+HATEOS
+    data = flask_request.get_json()
+    emails = data.get("emails", [])
+    company_ids = data.get("company_ids", [])
+    generate_xlsx = data.get("generate_xlsx", False)
 
-    :rtype flask.Response
-        ---
-        post:
-            summary: Company Create
-            requestBody:
-                description: 'Company to be created'
-                required: true
-                content:
-                    application/json:
-                        schema: CompanyCreateRequestSchema
-            responses:
-                200:
-                    description: Success response
-                    content:
-                        application/json:
-                            schema: CompanyCreateResponseSchema
-                4xx:
-                    description: Error response
-                    content:
-                        application/json:
-                            schema: CompanyCreateErrorResponseSchema
-                5xx:
-                    description: Service fail response
-                    content:
-                        application/json:
-                            schema: CompanyCreateErrorResponseSchema
-    """
+    if report_id not in REPORT_HEADERS:
+        return jsonify({"status": "erro", "mensagem": "report_id inválido"}), 400
+
+    if not emails or not isinstance(emails, list):
+        return jsonify({"status": "erro", "mensagem": "Lista de emails inválida"}), 400
+
+    emails_validos = EmailService.validate_emails(emails)
+
+    if len(emails_validos) != len(emails):
+        return jsonify({
+            "status": "erro",
+            "mensagem": "Todos os emails devem ser do domínio @madeiramadeira.com"
+        }), 400
+
+    repo = ReportRepository()
+    body = repo.list_entity_report(company_ids)
+
+    gerador = ReportGenerator(report_id, body)
+    report_file_path = gerador.generate_xlsx() if generate_xlsx else gerador.generate_pdf()
+    report_file_name = os.path.basename(report_file_path)
+
+    bucket_name = CONFIG.get("APP_BUCKET")
+    s3_key = f"reports/{report_file_name}"
+
+    # Upload do arquivo para o S3 (ou localstack)
+    with open(report_file_path, "rb") as f:
+        s3.upload_filedata(bucket_name, f, s3_key)
+
+    file_url = s3.get_public_url(bucket_name, s3_key)
+
+    report_obj = Report(report_type_id=report_id, url=file_url, status='completed')
+    repo.create_entity(report_obj, 'reports', 'id')
+
+    try:
+        subject = "📊 Seu relatório está pronto!"
+        body = f"""Olá,
+
+O relatório solicitado está pronto. Você pode acessá-lo aqui: 🔗 {file_url}
+
+Atenciosamente,
+Sistema de Relatórios
+"""
+
+        EmailService.send(subject, body, emails_validos)
+
+        return jsonify({
+            "status": "ok",
+            "mensagem": "Emails enviados com sucesso!",
+            "emails_enviados": emails_validos,
+            "url": file_url
+        })
+
+    except Exception as e:
+        return jsonify({"status": "erro", "mensagem": str(e)}), 500
+
+
+@APP.route(f"{API_ROOT_ENDPOINT}multiple-uploads/<int:company_id>/<storage_type>",
+           methods=["POST"])
+def upload_files(company_id: int, storage_type: str):
+    manager = UploadManager(logger=LOGGER, upload_service=UploadService(logger=LOGGER))
+    manager.debug(DEBUG)
+    response, status_code = manager.process_file_upload(flask_request, company_id, storage_type, s3)
+    return jsonify(response), status_code
+
+
+@APP.route(f"{API_ROOT_ENDPOINT}multiple-uploads/<int:company_id>/<storage_type>",
+           methods=["DELETE"])
+def delete_uploaded_files2(company_id: int, storage_type: str):
+    manager = UploadManager(logger=LOGGER, upload_service=UploadService(logger=LOGGER))
+    manager.debug(DEBUG)
+    data = flask_request.get_json()
+    result, status = manager.process_file_deletion(data, company_id, storage_type)
+    return jsonify(result), status
+
+
+@APP.route(API_ROOT + '/v1/report/types', methods=['GET'])
+def report_type_list() -> Response:
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = ReportManager(logger=LOGGER, report_service=ReportService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = manager.list_report_type(request)
+        response.set_data(data)
+        response.set_total(manager.count(request))
+
+        # hateos
+        response.links = None
+        set_hateos_meta(request, response)
+        # LOGGER.info(data)
+        # LOGGER.info(response.data)
+    except CustomException as err:
+        LOGGER.error(err)
+        error = ApiException(MessagesEnum.LIST_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(API_ROOT + '/v1/report', methods=['GET'])
+def report_list() -> Response:
+    request = ApiRequest().parse_request(APP)
+    LOGGER.info(f'request: {request}')
+
+    status_code = 200
+    response = ApiResponse(request)
+    response.set_hateos(True)
+
+    manager = ReportManager(logger=LOGGER, report_service=ReportService(logger=LOGGER))
+    manager.debug(DEBUG)
+    try:
+        data = manager.list(request)
+        response.set_data(data)
+        response.set_total(manager.count(request))
+
+        # hateos
+        response.links = None
+        set_hateos_meta(request, response)
+        # LOGGER.info(data)
+        # LOGGER.info(response.data)
+    except CustomException as err:
+        LOGGER.error(err)
+        error = ApiException(MessagesEnum.LIST_ERROR)
+        status_code = 400
+        if manager.exception:
+            error = manager.exception
+        response.set_exception(error)
+
+    return response.get_response(status_code)
+
+
+@APP.route(f"{API_ROOT}/v1/company", methods=["POST"])
+def create_company_with_address():
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
 
@@ -262,7 +383,9 @@ def company_create() -> Response:
     response = ApiResponse(request)
     response.set_hateos(False)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER,
+        company_service=CompanyService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
         response.set_data(manager.create(request))
@@ -278,26 +401,59 @@ def company_create() -> Response:
 
     return response.get_response(status_code)
 
+    # Pre script para gravar os dados
+    # from flambda_app.vos.company import CompanyVO
+    # from flambda_app.vos.address import Address
+    # from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
+    # try:
+    #     data = request.get_json()
+    #
+    #     # Extraindo dados da empresa
+    #     company_data = data.get("company")
+    #     if not company_data:
+    #         return jsonify({"error": "Dados da empresa são obrigatórios."}), 400
+    #
+    #     # Extraindo dados do endereço
+    #     address_data = data.get("address")
+    #     if not address_data:
+    #         return jsonify({"error": "Dados do endereço são obrigatórios."}), 400
+    #
+    #     # Criando objetos VO
+    #     company = CompanyVO(**company_data)
+    #     address = Address(**address_data)
+    #
+    #     # Criando a empresa e endereço
+    #     company_repo = CompanyRepository()
+    #     success, company_id = company_repo.create_with_address(company, address)
+    #
+    #     if success:
+    #         return jsonify({"success": True, "company_id": company_id}), 201
+    #     else:
+    #         return jsonify({'error': 'Erro ao salvar os dados.'}), 500
+    #
+    # except Exception as e:
+    #     return jsonify({'error': str(e)}), 500
+
 
 @APP.route('/v1/company/<company_id>', methods=['PATCH'])
 def company_update(company_id: str) -> Response:
     """
     Company update route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
         ---
         put:
             summary: Complete Company Update
             parameters:
             - in: path
               name: uuid
-              description: "Company Id"
+              description: "Company id"
               required: true
               schema:
                 type: string
@@ -336,7 +492,6 @@ def company_update(company_id: str) -> Response:
     manager.debug(DEBUG)
     try:
         response.set_data(manager.update(request, company_id))
-        # response.set_total(manager.count(request))
     except CustomException as error:
         LOGGER.error(error)
         if not isinstance(error, ValidationException):
@@ -531,20 +686,20 @@ def company_delete(company_id: str) -> Response:
     """
     Company delete route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
             ---
             delete:
                 summary: Soft Company Delete
                 parameters:
                 - in: path
                   name: uuid
-                  description: "Company Id"
+                  description: "Company d"
                   required: true
                   schema:
                     type: string
@@ -663,20 +818,20 @@ def employee_update(employee_id: str) -> Response:
     """
     Employee update route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
         ---
         put:
             summary: Complete Employee Update
             parameters:
             - in: path
               name: uuid
-              description: "Employee Id"
+              description: "Employee id"
               required: true
               schema:
                 type: string
@@ -714,9 +869,6 @@ def employee_update(employee_id: str) -> Response:
     manager = EmployeeManager(logger=LOGGER, employee_service=EmployeeService(logger=LOGGER))
     manager.debug(DEBUG)
     try:
-        # Primeiro obtém os dados do funcionário antes de deletar
-        employee_data = manager.get(request, employee_id) # Tavares, mostrar que dentro do update
-        # já faz o GET
         updated_employee = manager.update(request, employee_id)
         response.set_data(updated_employee)
     except CustomException as error:
@@ -736,13 +888,13 @@ def employee_list() -> Response:
     """
     Employee list route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
 
         ---
         get:
@@ -837,20 +989,20 @@ def employee_get(employee_id: str) -> Response:
     """
     Employee get route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
         ---
         get:
             summary: Employee Get
             parameters:
             - in: path
               name: uuid
-              description: "Employee Id"
+              description: "Employee id"
               required: true
               schema:
                 type: string
@@ -913,20 +1065,20 @@ def employee_delete(employee_id: str) -> Response:
     """
     Employee delete route
 
-    :return Endpoint with RESTful pattern
+    return Endpoint with RESTful pattern
 
     # pylint: disable=line-too-long
     See https://madeiramadeira.atlassian.net/wiki/spaces/CAR/pages/2244149708/
     WIP+-+Guidelines+-+RESTful+e+HATEOS
 
-    :rtype flask.Response
+    rtype flask.Response
             ---
             delete:
                 summary: Soft Employee Delete
                 parameters:
                 - in: path
                   name: uuid
-                  description: "Employee Id"
+                  description: "Employee id"
                   required: true
                   schema:
                     type: string
@@ -994,8 +1146,8 @@ spec.path(view=company_list,
           path="/v1/company", operations=get_doc(company_list))
 spec.path(view=company_get,
           path="/v1/company/{uuid}", operations=get_doc(company_get))
-spec.path(view=company_create,
-          path="/v1/company", operations=get_doc(company_create))
+spec.path(view=create_company_with_address,
+          path="/v1/company", operations=get_doc(create_company_with_address))
 spec.path(view=company_update,
           path="/v1/company/{uuid}", operations=get_doc(company_update))
 spec.path(view=company_delete,

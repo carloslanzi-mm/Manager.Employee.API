@@ -30,6 +30,8 @@ if not CURRENT_PATH.endswith('/'):
 
 if os.path.exists(PROJECTRC_FILE):
     ENV_VARS = load_projectrc(PROJECTRC_FILE)
+    for k, v in ENV_VARS.items():
+        os.environ.setdefault(k, v)
 
 APP_NAME = ENV_VARS.get('APP_NAME', PROJECT_NAME)
 APP_VERSION = ENV_VARS.get('APP_VERSION', '1.0.0')

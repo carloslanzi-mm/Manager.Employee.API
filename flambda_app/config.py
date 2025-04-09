@@ -29,6 +29,9 @@ class Configuration:
             value = os.getenv(k) if k in os.environ else None
             setattr(Configuration, k, value)
 
+        for k, v in os.environ.items():
+            setattr(self, k, v)
+
     def __dict__(self):
         attributes = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
         return {k: v for k, v in attributes if not (k.startswith('__') and k.endswith('__'))}

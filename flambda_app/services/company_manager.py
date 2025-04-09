@@ -84,22 +84,34 @@ class CompanyManager:
         if data is None and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
-        return data
 
-    def create(self, request: ApiRequest) -> Optional[CompanyVO]:
+        files = [file.to_api_response() for file in data.get('files', [])]
+        documents = [document.to_api_response() for document in data.get('documents', [])]
+
+        return {"company": data['company'].to_api_response(),
+                "address": data['address'].to_api_response(),
+                "documents": documents,
+                "files": files}
+
+    def create(self, request: ApiRequest):
         """
         Cria uma nova empresa com base na requisição.
 
         :param request: Objeto de requisição.
         :return: Objeto da empresa criada ou None.
         """
-        data = self.company_service.create(request.to_dict())
-        if (data is None) and self.company_service.exception:
+        company_obj, address_obj = self.company_service.create(request.to_dict())
+
+        if self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
-        return data
 
-    def update(self, request: ApiRequest, company_id: str) -> Optional[dict]:
+        return {
+            "company": company_obj.to_api_response(),
+            "address": address_obj.to_api_response()
+        }
+
+    def update(self, request: ApiRequest, company_id: str):
         """
         Atualiza uma empresa com base no ID.
 
@@ -107,11 +119,15 @@ class CompanyManager:
         :param company_id: ID da empresa.
         :return: Dados da empresa atualizada ou None.
         """
-        data = self.company_service.update(request.to_dict(), company_id)
-        if (data is None) and self.company_service.exception:
+        company, address = self.company_service.update(request.to_dict(), company_id)
+        if (company is None or address is None) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
-        return data
+
+        return {
+            "company": company.to_api_response(),
+            "address": address.to_api_response()
+        }
 
     def delete(self, request: ApiRequest, company_id: str) -> bool:
         """

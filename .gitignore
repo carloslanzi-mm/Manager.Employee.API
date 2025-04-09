@@ -5,6 +5,7 @@ venv
 *.pyc
 */**/__pycache__/*
 /.env
+/flambda_app/.env
 
 /.infrestructure/dist/deployment.zip
 /.infrestructure/.terraform/

@@ -4,58 +4,48 @@ MAINTAINER Anderson Contreira <anderson.contreira@madeiramadeira.com.br>
 ARG FLASK_PORT=5000
 ARG ENVIRONMENT_NAME=development
 ENV FLASK_ENV=$ENVIRONMENT_NAME \
-    FLASK_APP=app.py
-
-EXPOSE ${FLASK_PORT}
+    FLASK_APP=app.py \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
 # SQLite support
-RUN apk update \
-    && apk add sqlite \
-    && apk add socat
-
-# gcc requirement for greenlit and sqlalchemy
-RUN apk add --no-cache build-base \
-                       python3-dev \
-                       libffi-dev \
-                       musl-dev \
-                       make \
-                       gcc \
-                       openldap \
-                       libcurl \
-                       gpgme-dev \
-                       libc-dev \
-                       bash \
-                       curl \
-                       zip \
+RUN apk update && apk add --no-cache \
+    sqlite \
+    socat \
+    build-base \
+    python3-dev \
+    libffi-dev \
+    musl-dev \
+    openldap \
+    libcurl \
+    gpgme-dev \
+    libc-dev \
+    bash \
+    curl \
+    zip \
+    freetype-dev \
+    libpng-dev \
+    openblas-dev \
     && rm -rf /var/cache/apk/*
 
-# upgrade pip
-RUN pip install --upgrade pip
+# Upgrade pip e instala awscli
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir awscli
 
-# install aws cli
-RUN pip --no-cache-dir install --upgrade awscli
-
-RUN rm -Rf ./vendor/*
-
-# Install requirements
 COPY requirements.txt requirements-vendor.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir -r requirements-vendor.txt
 
 # Flask compatibility with Python 3.8
-RUN pip uninstall dataclasses -y
+RUN pip uninstall -y dataclasses || true
 RUN rm -Rf ./vendor/dataclasses-0.8.dist-info/ ./vendor/dataclasses.py
 
-# Copy project files
 COPY . .
 
-# entrypoint permission
-RUN ["chmod", "+x", "./docker/python/entrypoint.sh"]
-# entrypoint
+RUN chmod +x ./docker/python/entrypoint.sh
+
+EXPOSE ${FLASK_PORT}
+
 ENTRYPOINT ["sh", "./docker/python/entrypoint.sh"]
-
-
-# CMD [ "flask", "run", "--host", "0.0.0.0" ]
-# CMD [ "python3", "server.py" ]
