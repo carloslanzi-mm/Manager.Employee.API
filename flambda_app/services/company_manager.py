@@ -64,7 +64,19 @@ class CompanyManager:
         :param request: Objeto de requisição.
         :return: Lista de empresas ou um dicionário vazio.
         """
-        data = self.company_service.list(request.to_dict())
+
+        request_data = request.to_dict()
+
+        instance = CompanyVO()
+        allowed_filters = instance.filter_allowed_fields_data(
+            request_data.get('where', {})
+        )
+        request_data['where'] = allowed_filters
+
+        if request.query_string_args and not allowed_filters:
+            return []
+
+        data = self.company_service.list(request_data)
         if (data is None or len(data) == 0) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception

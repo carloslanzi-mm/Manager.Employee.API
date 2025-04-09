@@ -9,6 +9,7 @@ class Base:
     update_allowed_fields: List[str] = []
     required_fields: List[str] = []
     custom_validators = {}
+    filter_allowed_fields: List[str] = []
 
     def update(self, data: dict):
         """
@@ -49,6 +50,20 @@ class Base:
                 return field
 
         return None
+
+    def filter_allowed_fields_data(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Filtra os campos com base em `filter_allowed_fields`.
+
+        :param filters: Dicionário de filtros vindos da requisição.
+        :return: Dicionário com apenas os campos permitidos para filtro.
+        """
+        allowed = getattr(self, "filter_allowed_fields", [])
+        return {
+            key: value
+            for key, value in filters.items()
+            if key.split("__")[0] in allowed
+        }
 
 
 class BaseDocumentFile(Base):

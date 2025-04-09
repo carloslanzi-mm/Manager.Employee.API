@@ -60,6 +60,11 @@ class ApiResponse:
             self.data = data.to_dict()
 
         if isinstance(self.data, list):
+            if len(self.data) == 0:
+                self.count = 0
+                self.total = 0
+                return
+
             # has method dict to convert
             if helper.has_method(self.data[0], 'to_dict'):
                 dict_data = []

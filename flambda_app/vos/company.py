@@ -20,6 +20,11 @@ class CompanyVO(Base):
         "partnership_started_at", "cnpj"
     ]
 
+    filter_allowed_fields = [
+        "name", "contact_phone", "contact_email", "contact_person", "service_type",
+        "partnership_started_at", "cnpj", "created_at"
+    ]
+
     custom_validators = {
         "cnpj": validate_cnpj
     }

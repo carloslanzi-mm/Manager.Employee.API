@@ -316,35 +316,47 @@ class CompanyRepository(AbstractRepository):
         """
         Constrói a cláusula WHERE para a consulta SQL com base nas condições fornecidas.
 
-        Este método recebe um dicionário de condições e constrói a parte WHERE da query,
-        considerando se o valor é `None` ou um valor específico.
+        Suporta operadores como:
+            - field__like: LIKE '%valor%'
+            - field__gt, field__lt, field__gte, field__lte
+            - field__ne: diferente (!=)
+            - field: igualdade (=)
 
         Args:
-            where (dict): Dicionário de condições para a cláusula WHERE. As chaves são os
-            campos da tabela e os valores são os valores pelos quais os campos serão filtrados.
+            where (dict): Dicionário de filtros.
 
         Returns:
-            str: Retorna a string da cláusula WHERE gerada, com as condições aplicadas.
-
-        Example:
-            where = {'id': 1, 'name': 'Company X'}
-            build_where(where)
-            'c.id = 1 AND c.name = "Company X"'
-
-            where = {'id': None}
-            build_where(where)
-            'c.id IS NULL'
+            str: Cláusula WHERE montada.
         """
         where_list = []
-        for k_key, val in where.items():
-            if val is None:
-                where_value = '{} IS NULL'.format(self.BASE_TABLE_ALIAS + "." + k_key)
+
+        for k, v in where.items():
+            # Verifica se é operador especial com "__"
+            if '__' in k:
+                field, op = k.split('__', 1)
+                column = f"{self.BASE_TABLE_ALIAS}.{field}"
+                if op == 'like':
+                    where_list.append(f"{column} LIKE '%{v}%'")
+                elif op == 'gt':
+                    where_list.append(f"{column} > {v}")
+                elif op == 'lt':
+                    where_list.append(f"{column} < {v}")
+                elif op == 'gte':
+                    where_list.append(f"{column} >= {v}")
+                elif op == 'lte':
+                    where_list.append(f"{column} <= {v}")
+                elif op == 'ne':
+                    where_list.append(
+                        f"{column} != '{v}'" if isinstance(v, str) else f"{column} != {v}")
             else:
-                where_value = '{} = {}'.format(self.BASE_TABLE_ALIAS + "." + k_key,
-                                               '"{}"'.format(val) if isinstance(val, str) else val)
-            where_list.append(where_value)
-        where_str = " AND ".join(where_list)
-        return where_str
+                column = f"{self.BASE_TABLE_ALIAS}.{k}"
+                if v is None:
+                    where_list.append(f"{column} IS NULL")
+                else:
+                    where_list.append(
+                        f"{column} = '{v}'" if isinstance(v, str) else f"{column} = {v}")
+
+        return " AND ".join(where_list)
 
     def count(self, where: dict, sort_by=None, order_by=None):
         """

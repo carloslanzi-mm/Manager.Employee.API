@@ -45,20 +45,51 @@ class AbstractRepository:
     def _close(self):
         self.connection.close()
 
-    def build_where(self, where: dict, alias: str = None):
-        conditions = []
-        values = []
+    def build_where(self, where):
+        """
+        Constrói a cláusula WHERE para a consulta SQL com base nas condições fornecidas.
 
-        for key, value in where.items():
-            column = f"{alias}.{key}" if alias else key
-            if value is None:
-                conditions.append(f"{column} IS NULL")
+        Suporta operadores como:
+            - field__like: LIKE '%valor%'
+            - field__gt, field__lt, field__gte, field__lte
+            - field__ne: diferente (!=)
+            - field: igualdade (=)
+
+        Args:
+            where (dict): Dicionário de filtros.
+
+        Returns:
+            str: Cláusula WHERE montada.
+        """
+        where_list = []
+
+        for k, v in where.items():
+            # Verifica se é operador especial com "__"
+            if '__' in k:
+                field, op = k.split('__', 1)
+                column = f"{self.BASE_TABLE_ALIAS}.{field}"
+                if op == 'like':
+                    where_list.append(f"{column} LIKE '%{v}%'")
+                elif op == 'gt':
+                    where_list.append(f"{column} > {v}")
+                elif op == 'lt':
+                    where_list.append(f"{column} < {v}")
+                elif op == 'gte':
+                    where_list.append(f"{column} >= {v}")
+                elif op == 'lte':
+                    where_list.append(f"{column} <= {v}")
+                elif op == 'ne':
+                    where_list.append(
+                        f"{column} != '{v}'" if isinstance(v, str) else f"{column} != {v}")
             else:
-                conditions.append(f"{column} = %s")
-                values.append(value)
+                column = f"{self.BASE_TABLE_ALIAS}.{k}"
+                if v is None:
+                    where_list.append(f"{column} IS NULL")
+                else:
+                    where_list.append(
+                        f"{column} = '{v}'" if isinstance(v, str) else f"{column} = {v}")
 
-        where_clause = " AND ".join(conditions)
-        return where_clause, values
+        return " AND ".join(where_list)
 
     def create_entity(self, entity, table_name, primary_key="id"):
         """
