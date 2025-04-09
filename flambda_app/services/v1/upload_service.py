@@ -116,7 +116,6 @@ class UploadService:
 
         return {
             'mensagem': f'{len(database_entries)} arquivo(s) enviados e salvos com sucesso!',
-            'bucket': bucket_name,
             'arquivos': database_entries
         }, 200
 

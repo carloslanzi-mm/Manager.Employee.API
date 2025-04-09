@@ -442,3 +442,14 @@ def convert_list_to_dict(item_list, key_name):
                 result[item.get(key_name)] = item
 
     return result
+
+
+def validate_cnpj(cnpj: str) -> bool:
+    """
+    Verifica se o CNPJ tem exatamente 14 dígitos numéricos.
+    Não pode conter letras ou caracteres especiais.
+    """
+    if not isinstance(cnpj, str):
+        return False
+
+    return cnpj.isdigit() and len(cnpj) == 14

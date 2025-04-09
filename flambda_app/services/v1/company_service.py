@@ -281,7 +281,6 @@ class CompanyService:
 
             company_obj = CompanyVO(**company_data)
             address_obj = Address(**address_data)
-            # created = self.company_repository.create(company_vo)
             created = self.company_repository.create_with_address(company_obj, address_obj)
 
             if not created:

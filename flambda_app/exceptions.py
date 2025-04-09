@@ -115,14 +115,23 @@ class FilterException(ApiException):
 class ValidationException(ApiException):
     def __init__(self, message_enum, errors=None):
         """
-        :param (MessagesEnum) message_enum:
-        :param errors:
+        :param message_enum: Enum com código e mensagem
+        :param errors: Dicionário com detalhes do erro (campo, valor, etc)
         """
         super(ApiException, self).__init__(message_enum, errors)
         self.code = message_enum.code
         self.label = message_enum.label
         self.message = message_enum.message
         self.params = None
+
+        if errors and isinstance(errors, dict):
+            self.params = (errors.get('value'), errors.get('field'))
+
+        # Aplica os parâmetros na mensagem, se possível
+        try:
+            self.message = message_enum.message % self.params if self.params else message_enum.message
+        except (TypeError, ValueError):
+            self.message = message_enum.message
 
 
 class ServiceException(CustomException):

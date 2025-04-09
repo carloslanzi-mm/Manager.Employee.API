@@ -238,19 +238,25 @@ def send_email_report(report_id: int):
     if report_id not in REPORT_HEADERS:
         return jsonify({"status": "erro", "mensagem": "report_id inválido"}), 400
 
-    if not emails or not isinstance(emails, list):
-        return jsonify({"status": "erro", "mensagem": "Lista de emails inválida"}), 400
+    if emails:
+        if not isinstance(emails, list):
+            return jsonify({"status": "erro", "mensagem": "Lista de emails inválida"}), 400
 
-    emails_validos = EmailService.validate_emails(emails)
+        emails_validos = EmailService.validate_emails(emails)
 
-    if len(emails_validos) != len(emails):
-        return jsonify({
-            "status": "erro",
-            "mensagem": "Todos os emails devem ser do domínio @madeiramadeira.com"
-        }), 400
+        if len(emails_validos) != len(emails):
+            return jsonify({
+                "status": "erro",
+                "mensagem": "Todos os emails devem ser do domínio @madeiramadeira.com"
+            }), 400
+    else:
+        emails_validos = []
 
     repo = ReportRepository()
     body = repo.list_entity_report(company_ids)
+
+    if not body:
+        return jsonify({"status": "erro", "mensagem": "Não há dados para o relatório"}), 404
 
     gerador = ReportGenerator(report_id, body)
     report_file_path = gerador.generate_xlsx() if generate_xlsx else gerador.generate_pdf()
@@ -269,20 +275,20 @@ def send_email_report(report_id: int):
     repo.create_entity(report_obj, 'reports', 'id')
 
     try:
-        subject = "📊 Seu relatório está pronto!"
-        body = f"""Olá,
+        if emails_validos:
+            subject = "📊 Seu relatório está pronto!"
+            body = f"""Olá,
 
 O relatório solicitado está pronto. Você pode acessá-lo aqui: 🔗 {file_url}
 
 Atenciosamente,
 Sistema de Relatórios
 """
-
-        EmailService.send(subject, body, emails_validos)
+            EmailService.send(subject, body, emails_validos)
 
         return jsonify({
             "status": "ok",
-            "mensagem": "Emails enviados com sucesso!",
+            "mensagem": "Relatório gerado com sucesso!",
             "emails_enviados": emails_validos,
             "url": file_url
         })

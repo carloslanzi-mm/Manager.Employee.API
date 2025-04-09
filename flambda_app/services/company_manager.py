@@ -5,6 +5,8 @@ Módulo responsável por gerenciar operações relacionadas a empresas.
 from typing import Union, List, Optional
 
 from flambda_app.config import get_config
+from flambda_app.enums.messages import MessagesEnum
+from flambda_app.exceptions import ValidationException
 from flambda_app.logging import get_logger
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.http_resources.request import ApiRequest
@@ -36,6 +38,15 @@ class CompanyManager:
 
         # debug
         self.debug_mode = None
+
+    def _validate_required_fields(self, vo_instance, data_dict):
+        missing_field = vo_instance.validate_required_fields()
+        if missing_field:
+            self.exception = ValidationException(
+                MessagesEnum.VALIDATION_ERROR,
+                errors={'field': missing_field, 'value': data_dict.get(missing_field)}
+            )
+            raise self.exception
 
     def debug(self, flag: bool = False):
         """
@@ -100,6 +111,19 @@ class CompanyManager:
         :param request: Objeto de requisição.
         :return: Objeto da empresa criada ou None.
         """
+        from flambda_app.vos.address import Address
+
+        data = request.to_dict()
+        where_data = data.get("where", {})
+        company_data = where_data.get("company", {})
+        address_data = where_data.get("address", {})
+
+        company_vo = CompanyVO(**company_data)
+        self._validate_required_fields(company_vo, company_data)
+
+        address_vo = Address(**address_data)
+        self._validate_required_fields(address_vo, address_data)
+
         company_obj, address_obj = self.company_service.create(request.to_dict())
 
         if self.company_service.exception:

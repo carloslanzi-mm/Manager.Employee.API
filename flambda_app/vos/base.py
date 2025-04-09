@@ -1,20 +1,54 @@
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+
+from flambda_app.enums.messages import MessagesEnum
+from flambda_app.exceptions import ValidationException
 
 
 class Base:
-    update_allowed_fields = []
+    update_allowed_fields: List[str] = []
+    required_fields: List[str] = []
+    custom_validators = {}
 
     def update(self, data: dict):
         """
-        Atualiza a instância com os dados fornecidos.
-
-        Args:
-            data (dict): Dados para atualização.
+        Atualiza a instância com os dados fornecidos, validando campos obrigatórios.
         """
         for field in self.update_allowed_fields:
             if field in data:
-                setattr(self, field, data[field])
+                value = data[field]
+
+                # Validação para campos obrigatórios no update
+                if field in self.required_fields and (value is None or (isinstance(value, str)
+                                                                        and not value.strip())):
+                    msg = f"campo '{field}' é obrigatório e não pode ser vazio ou nulo."
+                    raise ValidationException(
+                        MessagesEnum.VALIDATION_ERROR,
+                        errors={
+                            "field": field,
+                            "message": msg,
+                            "value": value
+                        }
+                    )
+
+                setattr(self, field, value)
+
+    def validate_required_fields(self) -> Optional[str]:
+        """
+        Valida os campos obrigatórios em required_fields.
+        Retorna erro se faltar algum campo, ou None se válido.
+        """
+        for field in self.required_fields:
+            value = getattr(self, field, None)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                return f"O campo '{field}' é obrigatório."
+
+        for field, validator in getattr(self, "custom_validators", {}).items():
+            value = getattr(self, field, None)
+            if not validator(value):
+                return field
+
+        return None
 
 
 class BaseDocumentFile(Base):
