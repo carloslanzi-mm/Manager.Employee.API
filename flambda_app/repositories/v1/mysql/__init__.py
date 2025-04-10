@@ -2,6 +2,8 @@
 Mysql Repositories Module for Flambda APP
 Version: 1.0.0
 """
+from typing import Dict, Any
+
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.logging import get_logger
 from flambda_app.request_control import Pagination, PaginationType
@@ -45,7 +47,7 @@ class AbstractRepository:
     def _close(self):
         self.connection.close()
 
-    def build_where(self, where):
+    def build_where(self, where: Dict[str, Any]) -> str:
         """
         Constrói a cláusula WHERE para a consulta SQL com base nas condições fornecidas.
 

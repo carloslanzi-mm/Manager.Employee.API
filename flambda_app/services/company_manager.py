@@ -2,7 +2,7 @@
 Módulo responsável por gerenciar operações relacionadas a empresas.
 """
 
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Any, Dict
 
 from flambda_app.config import get_config
 from flambda_app.enums.messages import MessagesEnum
@@ -11,6 +11,7 @@ from flambda_app.logging import get_logger
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.http_resources.request import ApiRequest
 from flambda_app.vos.company import CompanyVO
+from flambda_app.vos.address import Address
 
 
 class CompanyManager:
@@ -39,7 +40,18 @@ class CompanyManager:
         # debug
         self.debug_mode = None
 
-    def _validate_required_fields(self, vo_instance, data_dict):
+    def _validate_required_fields(self, vo_instance: Any, data_dict: Dict[str, Any]) -> None:
+        """
+        Valida os campos obrigatórios de uma instância de Value Object (VO).
+
+        Chama o método `validate_required_fields()` da instância e,
+        caso algum campo obrigatório esteja ausente ou inválido,
+        dispara uma `ValidationException`.
+
+        :param vo_instance: Instância de um VO que herda da Base metodo `validate_required_fields`.
+        :param data_dict: Dicionário original com os dados recebidos (ex: payload da requisição).
+        :raises ValidationException: Se algum campo obrigatório estiver ausente ou inválido.
+        """
         missing_field = vo_instance.validate_required_fields()
         if missing_field:
             self.exception = ValidationException(
@@ -59,10 +71,14 @@ class CompanyManager:
 
     def list(self, request: ApiRequest) -> List[Union[CompanyVO, dict]]:
         """
-        Lista as empresas com base na requisição.
+        Lista empresas com base nos filtros fornecidos na requisição.
 
-        :param request: Objeto de requisição.
-        :return: Lista de empresas ou um dicionário vazio.
+        Aplica os filtros permitidos definidos em `CompanyVO.filter_allowed_fields` e
+        verifica se a requisição contém apenas parâmetros de paginação/ordenação.
+
+        :param request: Objeto da requisição contendo dados do query string e do body.
+        :return: Lista de instâncias de `CompanyVO` ou dicionários representando empresas.
+        :raises ValidationException ou outra exceção propagada pela `company_service`, se houver erro.
         """
 
         request_data = request.to_dict()
@@ -73,14 +89,16 @@ class CompanyManager:
         )
         request_data['where'] = allowed_filters
 
+        # Evita listagem se a query possui parâmetros não permitidos
         if request.query_string_args and not allowed_filters:
-            return []
+            if not instance.is_only_sorting_or_pagination(request.query_string_args):
+                return []
 
         data = self.company_service.list(request_data)
         if (data is None or len(data) == 0) and self.company_service.exception:
             self.exception = self.company_service.exception
             raise self.exception
-        return data if data is not None else []
+        return data or []
 
     def count(self, request: ApiRequest) -> int:
         """
@@ -116,14 +134,17 @@ class CompanyManager:
                 "documents": documents,
                 "files": files}
 
-    def create(self, request: ApiRequest):
+    def create(self, request: ApiRequest) -> Optional[Dict[str, Any]]:
         """
-        Cria uma nova empresa com base na requisição.
+        Cria uma nova empresa e seu endereço com base nos dados fornecidos na requisição.
 
-        :param request: Objeto de requisição.
-        :return: Objeto da empresa criada ou None.
+        Realiza a validação dos campos obrigatórios para `CompanyVO` e `Address`,
+        antes de delegar a criação à camada de serviço.
+
+        :param request: Objeto da requisição contendo os dados para criação.
+        :return: Dicionário com os dados da empresa e do endereço criados, ou None.
+        :raises ValidationException: Caso algum campo obrigatório não seja informado.
         """
-        from flambda_app.vos.address import Address
 
         data = request.to_dict()
         where_data = data.get("where", {})

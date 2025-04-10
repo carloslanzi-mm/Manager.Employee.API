@@ -85,10 +85,6 @@ class CompanyService:
 
         data = []
         where = request_formatted['where']
-        # if where == dict():
-        #     where = {
-        #         'active': 1
-        #     }
 
         # exclude deleted
         where['deleted_at'] = None
@@ -141,10 +137,6 @@ class CompanyService:
 
         total: int = 0
         where = request['where']
-        if where == dict():
-            where = {
-                'active': 1
-            }
 
         # exclude deleted
         where['deleted_at'] = None

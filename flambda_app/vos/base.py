@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Set
 
 from flambda_app.enums.messages import MessagesEnum
 from flambda_app.exceptions import ValidationException
@@ -10,10 +10,14 @@ class Base:
     required_fields: List[str] = []
     custom_validators = {}
     filter_allowed_fields: List[str] = []
+    always_allowed_query_params: Set[str] = {'sort_by', 'order_by', 'limit', 'offset'}
 
-    def update(self, data: dict):
+    def update(self, data: Dict[str, Any]) -> None:
         """
-        Atualiza a instância com os dados fornecidos, validando campos obrigatórios.
+        Atualiza os campos permitidos com os dados fornecidos, validando obrigatórios.
+
+        :param data: Dicionário com dados a serem atualizados.
+        :raises ValidationException: Caso um campo obrigatório esteja ausente ou inválido.
         """
         for field in self.update_allowed_fields:
             if field in data:
@@ -36,8 +40,9 @@ class Base:
 
     def validate_required_fields(self) -> Optional[str]:
         """
-        Valida os campos obrigatórios em required_fields.
-        Retorna erro se faltar algum campo, ou None se válido.
+        Verifica se os campos obrigatórios estão preenchidos e válidos.
+
+        :return: Nome do campo com erro ou `None` se tudo estiver válido.
         """
         for field in self.required_fields:
             value = getattr(self, field, None)
@@ -53,17 +58,27 @@ class Base:
 
     def filter_allowed_fields_data(self, filters: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Filtra os campos com base em `filter_allowed_fields`.
+        Filtra o dicionário de filtros, mantendo apenas os campos permitidos.
 
-        :param filters: Dicionário de filtros vindos da requisição.
-        :return: Dicionário com apenas os campos permitidos para filtro.
+        :param filters: Dicionário original de filtros.
+        :return: Novo dicionário com apenas os filtros permitidos.
         """
         allowed = getattr(self, "filter_allowed_fields", [])
+        always_allowed = getattr(self, "always_allowed_query_params", set())
         return {
             key: value
             for key, value in filters.items()
-            if key.split("__")[0] in allowed
+            if key.split("__")[0] in allowed or key in always_allowed
         }
+
+    def is_only_sorting_or_pagination(self, query_args: dict) -> bool:
+        """
+        Verifica se os parâmetros da query contêm apenas paginação ou ordenação.
+
+        :param query_args: Parâmetros da query string.
+        :return: True se todos os parâmetros forem permitidos por default.
+        """
+        return all(k in self.always_allowed_query_params for k in query_args)
 
 
 class BaseDocumentFile(Base):
@@ -92,6 +107,11 @@ class BaseDocumentFile(Base):
                  deleted_at: Optional[str] = None,
                  **kwargs: Any
                  ):
+        """
+        Inicializa uma instância de BaseDocumentFile com os campos fornecidos.
+
+        :param kwargs: Campos adicionais compatíveis com atributos existentes.
+        """
 
         self.id = id
         self.company_id = company_id
@@ -107,6 +127,11 @@ class BaseDocumentFile(Base):
                 setattr(self, key, value)
 
     def to_dict(self) -> Dict[str, Optional[str]]:
+        """
+        Converte os dados da instância para um dicionário completo.
+
+        :return: Dicionário com todos os campos principais.
+        """
         return {
             "id": self.id,
             "company_id": self.company_id,
@@ -119,7 +144,11 @@ class BaseDocumentFile(Base):
         }
 
     def get_type_name(self) -> Optional[str]:
-        """Busca o nome da empresa usando CompanyService se não estiver no dicionário."""
+        """
+        Busca o nome do tipo relacionado à instância via repositório.
+
+        :return: Nome do tipo se encontrado, ou None.
+        """
         if not self.type_id:
             return None
 
@@ -137,6 +166,11 @@ class BaseDocumentFile(Base):
         return data.name if data else None
 
     def to_api_response(self) -> Dict[str, Optional[str]]:
+        """
+        Converte os dados da instância para um dicionário com estrutura para API.
+
+        :return: Dicionário formatado para resposta de API.
+        """
         return {
             "id": self.id,
             "name": self.name,

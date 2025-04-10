@@ -80,10 +80,6 @@ class ReportService:
 
         total: int = 0
         where = request['where']
-        if where == dict():
-            where = {
-                'active': 1
-            }
 
         # exclude deleted
         where['deleted_at'] = None

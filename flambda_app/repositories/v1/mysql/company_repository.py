@@ -3,6 +3,7 @@ Módulo responsável por gerenciar operações relacionadas a empresa.
 """
 
 from datetime import datetime
+from typing import Union, List, Optional, Dict, Any
 
 from flambda_app.request_control import Order, Pagination, PaginationType
 from flambda_app.repositories.v1.mysql import AbstractRepository
@@ -312,7 +313,7 @@ class CompanyRepository(AbstractRepository):
 
         return result
 
-    def build_where(self, where):
+    def build_where(self, where: Dict[str, Any]) -> str:
         """
         Constrói a cláusula WHERE para a consulta SQL com base nas condições fornecidas.
 
@@ -358,62 +359,43 @@ class CompanyRepository(AbstractRepository):
 
         return " AND ".join(where_list)
 
-    def count(self, where: dict, sort_by=None, order_by=None):
+    def count(self, where: dict, sort_by: Union[str, List[str], None] = None,
+              order_by: Optional[str] = None) -> int:
         """
         Conta o número total de registros na tabela com base nas condições fornecidas.
 
-        Este método constrói e executa uma consulta SQL para contar o número de registros
-        na tabela, aplicando as condições de filtro (WHERE), ordenação (ORDER BY) e outras
-        opções fornecidas.
+        Constrói e executa uma query SQL com a cláusula WHERE baseada nos filtros fornecidos,
+        retornando a contagem de registros.
 
         Args:
-            where (dict): Dicionário de condições para a cláusula WHERE. As chaves são os
-            campos da tabela e os valores são os valores pelos quais os campos serão filtrados.
-            sort_by (str | list, opcional): Campo(s) para ordenar os resultados
-            (padrão é a chave primária).
-            order_by (str, opcional): Direção de ordenação, podendo ser 'ASC' ou 'DESC'
-            (padrão é 'ASC').
+            where (dict): Dicionário com filtros para a cláusula WHERE. Suporta operadores como
+                - field: igualdade (=)
+                - field__ne: diferente (!=)
+                - field__like: LIKE '%valor%'
+                - field__gt, __lt, __gte, __lte
+
+            sort_by (str | list, opcional): Ignorado, mantido por compatibilidade.
+            order_by (str, opcional): Ignorado, mantido por compatibilidade.
 
         Returns:
-            int: O número total de registros que atendem às condições fornecidas.
-
-        Example:
-            where = {'status': 'active'}
-            count(where)
-            10
+            int: Número total de registros que satisfazem os filtros.
         """
-        if order_by is None:
-            order_by = Order.ASC
+        sql = f"SELECT COUNT(1) as total FROM {self.BASE_TABLE} as {self.BASE_TABLE_ALIAS}"
 
-        if sort_by is None:
-            sort_by = self.PK
-        elif isinstance(sort_by, list):
-            sort_by_arr = [self.BASE_TABLE_ALIAS + '.' + val for val in sort_by]
-            sort_by = ",".join(sort_by_arr)
-        else:
-            sort_by = self.BASE_TABLE_ALIAS + '.' + sort_by
-
-        sql = "SELECT COUNT(1) as total FROM {} as {}".format(self.BASE_TABLE,
-                                                              self.BASE_TABLE_ALIAS)
-
-        if where != dict():
+        if where:
             where_str = self.build_where(where)
-            sql = sql + " WHERE {}".format(where_str)
-
-        sql = sql + " ORDER BY {} {}".format(sort_by, order_by)
+            sql += f" WHERE {where_str}"
 
         try:
             result = self._execute(sql)
             result = result.fetchone()
-            result = result['total']
+            return result['total'] if result and 'total' in result else 0
         except Exception as err:
             self.logger.error(err)
             self._exception = err
-            result = 0
+            return 0
         finally:
             self._close()
-
-        return result
 
     def soft_delete(self, value, key=None):
         """
