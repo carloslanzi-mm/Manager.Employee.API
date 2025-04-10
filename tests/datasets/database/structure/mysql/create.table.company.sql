@@ -11,7 +11,8 @@ CREATE TABLE company (
     agency VARCHAR(20),
     account_number VARCHAR(30),
     account_type ENUM('corrente', 'poupança') DEFAULT 'corrente',
-    cnpj VARCHAR(14)
+    cnpj VARCHAR(14),
+    status BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,

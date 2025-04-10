@@ -12,17 +12,17 @@ class CompanyVO(Base):
     update_allowed_fields = [
         "name", "created_at", "updated_at", "deleted_at", "contact_phone", "contact_email",
         "contact_person", "service_type", "partnership_started_at", "bank_name",
-        "agency", "account_number", "account_type", "cnpj"
+        "agency", "account_number", "account_type", "cnpj", "status"
     ]
 
     required_fields = [
         "name", "contact_phone", "contact_email", "contact_person", "service_type",
-        "partnership_started_at", "cnpj"
+        "partnership_started_at", "cnpj", "status"
     ]
 
     filter_allowed_fields = [
         "name", "contact_phone", "contact_email", "contact_person", "service_type",
-        "partnership_started_at", "cnpj", "created_at"
+        "partnership_started_at", "cnpj", "created_at", "status"
     ]
 
     custom_validators = {
@@ -32,6 +32,7 @@ class CompanyVO(Base):
     id: Optional[int]
     uuid: str
     name: Optional[str]
+    status: Optional[bool]
     contact_phone: Optional[str]
     contact_email: Optional[str]
     contact_person: Optional[str]
@@ -50,6 +51,7 @@ class CompanyVO(Base):
                  company_id: Optional[int] = None,
                  uuid: Optional[str] = None,
                  name: Optional[str] = None,
+                 status: Optional[bool] = None,
                  contact_phone: Optional[str] = None,
                  contact_email: Optional[str] = None,
                  contact_person: Optional[str] = None,
@@ -69,6 +71,7 @@ class CompanyVO(Base):
         self.id = company_id
         self.uuid = uuid or str(python_uuid.uuid4())
         self.name = name
+        self.status = status
         self.created_at = created_at or datetime.now().isoformat()
         self.updated_at = updated_at
         self.deleted_at = deleted_at
@@ -98,7 +101,7 @@ class CompanyVO(Base):
                f"service_type={self.service_type}, partnership_started_at={self.partnership_started_at}, " \
                f"bank_name={self.bank_name}, agency={self.agency}, " \
                f"account_number={self.account_number}, account_type={self.account_type}, " \
-               f"cnpj={self.cnpj})"
+               f"cnpj={self.cnpj}, status={self.status})"
 
     def to_dict(self) -> Dict[str, Optional[str]]:
         """
@@ -108,6 +111,7 @@ class CompanyVO(Base):
             'id': self.id,
             'uuid': self.uuid,
             'name': self.name,
+            'status': self.status,
             'contact_phone': self.contact_phone,
             'contact_email': self.contact_email,
             'contact_person': self.contact_person,
@@ -128,6 +132,7 @@ class CompanyVO(Base):
             "id": self.id,
             "uuid": self.uuid,
             'name': self.name,
+            'status': self.status,
             'contact_phone': self.contact_phone,
             'contact_email': self.contact_email,
             'contact_person': self.contact_person,
