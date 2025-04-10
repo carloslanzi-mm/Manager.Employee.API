@@ -1,7 +1,7 @@
 import uuid as python_uuid
 from datetime import datetime
 from typing import Dict, Optional, Any
-from .base import Base
+from flambda_app.vos.base import Base
 from flambda_app.helper import validate_cnpj
 
 

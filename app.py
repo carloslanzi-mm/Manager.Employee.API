@@ -2,6 +2,7 @@
 
 This module contains the handler method
 """
+
 import base64
 import os
 
@@ -14,8 +15,13 @@ from flambda_app.enums.messages import MessagesEnum
 from flambda_app.exceptions import ApiException, CustomException, ValidationException
 from flambda_app.flambda import Flambda
 from flambda_app.helper import open_vendor_file, print_routes
-from flambda_app.http_helper import (CUSTOM_DEFAULT_HEADERS, get_favicon_16x16_data,
-                                     get_favicon_32x32_data, set_hateos_links, set_hateos_meta)
+from flambda_app.http_helper import (
+    CUSTOM_DEFAULT_HEADERS,
+    get_favicon_16x16_data,
+    get_favicon_32x32_data,
+    set_hateos_links,
+    set_hateos_meta,
+)
 from flambda_app.http_resources.request import ApiRequest
 from flambda_app.http_resources.response import ApiResponse
 from flambda_app.logging import get_logger, set_debug_mode
@@ -27,6 +33,8 @@ from flambda_app.services.report_manager import ReportManager
 from flambda_app.services.upload_manager import UploadManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
+from flambda_app.auth.keycloak_auth import keycloak_openid, require_token
+
 from flambda_app.services.v1.report_service import ReportService
 from flambda_app.services.v1.upload_service import UploadService
 
@@ -56,6 +64,9 @@ s3.create_bucket(CONFIG.get('APP_BUCKET'))
 
 API_ROOT = os.environ['API_ROOT'] if 'API_ROOT' in os.environ else ''
 API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
+APP.keycloak_openid = keycloak_openid
+API_ROOT = os.environ["API_ROOT"] if "API_ROOT" in os.environ else ""
+API_ROOT_ENDPOINT = API_ROOT if API_ROOT != "" or API_ROOT is None else "/"
 
 LOGGER.info("API_ROOT_ENDPOINT: {}".format(API_ROOT_ENDPOINT))
 
@@ -73,11 +84,11 @@ def index():
 
     :rtype: flask.Response
     """
-    body = {"app": f'{APP_NAME}:{APP_VERSION}'}
+    body = {"app": f"{APP_NAME}:{APP_VERSION}"}
     return http_helper.create_response(body=body, status_code=200)
 
 
-@APP.route(API_ROOT + '/alive')
+@APP.route(API_ROOT + "/alive")
 def alive():
     """
     Health check path
@@ -114,12 +125,12 @@ def alive():
                     content:
                         application/json:
                             schema: HealthCheckSchema
-        """
+    """
     service = HealthCheckManager()
     return service.check()
 
 
-@APP.route(API_ROOT + '/favicon-32x32.png')
+@APP.route(API_ROOT + "/favicon-32x32.png")
 def favicon():
     """
     Favicon path
@@ -128,15 +139,15 @@ def favicon():
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "image/png"
+    headers["Content-Type"] = "image/png"
     data = get_favicon_32x32_data()
 
     if helper.is_running_on_lambda():
         data_b64 = {
-            'headers': headers,
-            'statusCode': 200,
-            'body': data,
-            'isBase64Encoded': True
+            "headers": headers,
+            "statusCode": 200,
+            "body": data,
+            "isBase64Encoded": True,
         }
         data = helper.to_json(data_b64)
         headers = {"Content-Type": "application/json"}
@@ -146,7 +157,7 @@ def favicon():
     return http_helper.create_response(body=data, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/favicon-16x16.png')
+@APP.route(API_ROOT + "/favicon-16x16.png")
 def favicon16():
     """
     Favicon path
@@ -155,15 +166,15 @@ def favicon16():
     :rtype: flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "image/png"
+    headers["Content-Type"] = "image/png"
     data = get_favicon_16x16_data()
 
     if helper.is_running_on_lambda():
         data_b64 = {
-            'headers': headers,
-            'statusCode': 200,
-            'body': data,
-            'isBase64Encoded': True
+            "headers": headers,
+            "statusCode": 200,
+            "body": data,
+            "isBase64Encoded": True,
         }
         data = helper.to_json(data_b64)
         headers = {"Content-Type": "application/json"}
@@ -173,7 +184,7 @@ def favicon16():
     return http_helper.create_response(body=data, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/docs')
+@APP.route(API_ROOT + "/docs")
 def docs():
     """
     Swagger OpenApi documentation
@@ -187,14 +198,13 @@ def docs():
     rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "text/html"
-    html_file = open_vendor_file('./public/swagger/index.html', 'r')
+    headers["Content-Type"] = "text/html"
+    html_file = open_vendor_file("./public/swagger/index.html", "r")
     html = html_file.read()
-    return http_helper.create_response(
-        body=html, status_code=200, headers=headers)
+    return http_helper.create_response(body=html, status_code=200, headers=headers)
 
 
-@APP.route(API_ROOT + '/openapi.yml')
+@APP.route(API_ROOT + "/openapi.yml")
 def openapi():
     """
     Swagger OpenApi documentation route
@@ -208,11 +218,10 @@ def openapi():
     rtype flask.Response
     """
     headers = CUSTOM_DEFAULT_HEADERS.copy()
-    headers['Content-Type'] = "text/yaml"
-    html_file = open_vendor_file('./public/swagger/openapi.yml', 'r')
+    headers["Content-Type"] = "text/yaml"
+    html_file = open_vendor_file("./public/swagger/openapi.yml", "r")
     html = html_file.read()
-    return http_helper.create_response(
-        body=html, status_code=200, headers=headers)
+    return http_helper.create_response(body=html, status_code=200, headers=headers)
 
 
 # *************
@@ -383,7 +392,7 @@ def report_list() -> Response:
 @APP.route(f"{API_ROOT}/v1/company", methods=["POST"])
 def create_company_with_address():
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
@@ -441,7 +450,7 @@ def create_company_with_address():
     #     return jsonify({'error': str(e)}), 500
 
 
-@APP.route('/v1/company/<company_id>', methods=['PATCH'])
+@APP.route("/v1/company/<company_id>", methods=["PATCH"])
 def company_update(company_id: str) -> Response:
     """
     Company update route
@@ -486,9 +495,9 @@ def company_update(company_id: str) -> Response:
                     content:
                         application/json:
                             schema: CompanyUpdateErrorResponseSchema
-            """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
@@ -510,7 +519,7 @@ def company_update(company_id: str) -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/company', methods=['GET'])
+@APP.route(API_ROOT + "/v1/company", methods=["GET"])
 def company_list() -> Response:
     """
     Company list route
@@ -580,15 +589,17 @@ def company_list() -> Response:
                     content:
                         application/json:
                             schema: CompanyListErrorResponseSchema
-        """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
     response.set_hateos(True)
 
-    manager = CompanyManager(logger=LOGGER, company_service=CompanyService(logger=LOGGER))
+    manager = CompanyManager(
+        logger=LOGGER, company_service=CompanyService(logger=LOGGER)
+    )
     manager.debug(DEBUG)
     try:
         data = manager.list(request)
@@ -611,7 +622,7 @@ def company_list() -> Response:
     return response.get_response(status_code)
 
 
-@APP.route(API_ROOT + '/v1/company/<company_id>', methods=['GET'])
+@APP.route(API_ROOT + "/v1/company/<company_id>", methods=["GET"])
 def company_get(company_id: str) -> Response:
     """
     Company get route
@@ -660,7 +671,7 @@ def company_get(company_id: str) -> Response:
                             schema: CompanyGetErrorResponseSchema
     """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
@@ -727,7 +738,7 @@ def company_delete(company_id: str) -> Response:
                         content:
                             application/json:
                                 schema: CompanySoftDeleteErrorResponseSchema
-                    """
+    """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
 
@@ -864,7 +875,7 @@ def employee_update(employee_id: str) -> Response:
                     content:
                         application/json:
                             schema: EmployeeUpdateErrorResponseSchema
-            """
+    """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
 
@@ -959,9 +970,9 @@ def employee_list() -> Response:
                     content:
                         application/json:
                             schema: EmployeeListErrorResponseSchema
-        """
+    """
     request = ApiRequest().parse_request(APP)
-    LOGGER.info(f'request: {request}')
+    LOGGER.info(f"request: {request}")
 
     status_code = 200
     response = ApiResponse(request)
@@ -1106,7 +1117,7 @@ def employee_delete(employee_id: str) -> Response:
                         content:
                             application/json:
                                 schema: EmployeeSoftDeleteErrorResponseSchema
-                    """
+    """
     request = ApiRequest().parse_request(APP)
     LOGGER.info(f'request: {request}')
     status_code = 200

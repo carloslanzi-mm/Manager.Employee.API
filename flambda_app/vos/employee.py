@@ -1,9 +1,9 @@
 import uuid as python_uuid
 from datetime import datetime
 from typing import Dict, Optional, Any
-from .base import Base
 
 from flambda_app.repositories.v1.mysql.company_repository import CompanyRepository
+from flambda_app.vos.base import Base
 
 
 class EmployeeVO(Base):
@@ -12,8 +12,14 @@ class EmployeeVO(Base):
     """
 
     update_allowed_fields = [
-        "company_id", "name", "hourly_rate", "is_admin",
-        "is_active", "created_at", "updated_at", "deleted_at"
+        "company_id",
+        "name",
+        "hourly_rate",
+        "is_admin",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "deleted_at",
     ]
 
     employee_id: Optional[int]
@@ -70,16 +76,16 @@ class EmployeeVO(Base):
         Converts the EmployeeVO to a dictionary.
         """
         return {
-            'id': self.id,
-            'uuid': self.uuid,
-            'company_id': self.company_id,
-            'name': self.name,
-            'hourly_rate': self.hourly_rate,
-            'is_admin': self.is_admin,
-            'is_active': self.is_active,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
-            'deleted_at': self.deleted_at
+            "id": self.id,
+            "uuid": self.uuid,
+            "company_id": self.company_id,
+            "name": self.name,
+            "hourly_rate": self.hourly_rate,
+            "is_admin": self.is_admin,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "deleted_at": self.deleted_at
         }
 
     def get_company_name(self) -> Optional[str]:
