@@ -1,3 +1,4 @@
+import os
 import re
 import smtplib
 from email.mime.text import MIMEText
@@ -5,11 +6,11 @@ from email.mime.multipart import MIMEMultipart
 
 
 class EmailService:
-    SMTP_HOST = 'sandbox.smtp.mailtrap.io'
-    SMTP_PORT = 2525
-    SMTP_USERNAME = 'dc576eec74e766'
-    SMTP_PASSWORD = 'b3ba36d69cc7db'
-    FROM_EMAIL = 'Report <relatorios@madeiramadeira.com>'
+    SMTP_HOST = os.environ.get('SMTP_HOST', '')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 2525))
+    SMTP_USERNAME = os.environ.get('SMTP_USERNAME', '')
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+    FROM_EMAIL = os.environ.get('FROM_EMAIL', 'Report <relatorios@madeiramadeira.com>')
     EMAIL_DOMAIN = "@madeiramadeira.com"
 
     @classmethod
