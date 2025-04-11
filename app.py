@@ -33,7 +33,7 @@ from flambda_app.services.report_manager import ReportManager
 from flambda_app.services.upload_manager import UploadManager
 from flambda_app.services.v1.company_service import CompanyService
 from flambda_app.services.v1.employee_service import EmployeeService
-from flambda_app.auth.keycloak_auth import keycloak_openid, require_token
+# from flambda_app.auth.keycloak_auth import keycloak_openid, require_token
 
 from flambda_app.services.v1.report_service import ReportService
 from flambda_app.services.v1.upload_service import UploadService
@@ -64,7 +64,7 @@ s3.create_bucket(CONFIG.get('APP_BUCKET'))
 
 API_ROOT = os.environ['API_ROOT'] if 'API_ROOT' in os.environ else ''
 API_ROOT_ENDPOINT = API_ROOT if API_ROOT != '' or API_ROOT is None else '/'
-APP.keycloak_openid = keycloak_openid
+# APP.keycloak_openid = keycloak_openid
 API_ROOT = os.environ["API_ROOT"] if "API_ROOT" in os.environ else ""
 API_ROOT_ENDPOINT = API_ROOT if API_ROOT != "" or API_ROOT is None else "/"
 

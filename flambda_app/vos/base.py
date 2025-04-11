@@ -1,3 +1,7 @@
+"""
+Módulo contendo classes base reutilizáveis para Objects.
+"""
+
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Set
 
@@ -6,6 +10,9 @@ from flambda_app.exceptions import ValidationException
 
 
 class Base:
+    """
+    Classe base para Value Objects com suporte a validação, update e filtros.
+    """
     update_allowed_fields: List[str] = []
     required_fields: List[str] = []
     custom_validators = {}
@@ -15,9 +22,6 @@ class Base:
     def update(self, data: Dict[str, Any]) -> None:
         """
         Atualiza os campos permitidos com os dados fornecidos, validando obrigatórios.
-
-        :param data: Dicionário com dados a serem atualizados.
-        :raises ValidationException: Caso um campo obrigatório esteja ausente ou inválido.
         """
         for field in self.update_allowed_fields:
             if field in data:
@@ -41,8 +45,6 @@ class Base:
     def validate_required_fields(self) -> Optional[str]:
         """
         Verifica se os campos obrigatórios estão preenchidos e válidos.
-
-        :return: Nome do campo com erro ou `None` se tudo estiver válido.
         """
         for field in self.required_fields:
             value = getattr(self, field, None)
@@ -58,10 +60,7 @@ class Base:
 
     def filter_allowed_fields_data(self, filters: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Filtra o dicionário de filtros, mantendo apenas os campos permitidos.
-
-        :param filters: Dicionário original de filtros.
-        :return: Novo dicionário com apenas os filtros permitidos.
+        Filtra os dados mantendo apenas os campos de filtro permitidos.
         """
         allowed = getattr(self, "filter_allowed_fields", [])
         always_allowed = getattr(self, "always_allowed_query_params", set())
@@ -74,9 +73,6 @@ class Base:
     def is_only_sorting_or_pagination(self, query_args: dict) -> bool:
         """
         Verifica se os parâmetros da query contêm apenas paginação ou ordenação.
-
-        :param query_args: Parâmetros da query string.
-        :return: True se todos os parâmetros forem permitidos por default.
         """
         return all(k in self.always_allowed_query_params for k in query_args)
 
@@ -152,7 +148,7 @@ class BaseDocumentFile(Base):
         if not self.type_id:
             return None
 
-        from .type import Type
+        from flambda_app.vos.type import Type
         from flambda_app.repositories.v1.mysql.files_document_repository import \
             FilesDocumentRepository
 

@@ -57,8 +57,20 @@ class UploadManager:
             raise self.exception
         return total
 
-    def process_file_upload(self, flask_request, company_id: int, storage_type: str, s3):
+    def process_file_upload(self, flask_request, company_id: int, storage_type: str, s3_aws):
+        """
+        Processa o upload de arquivos para uma empresa, validando os campos obrigatórios
+        e encaminhando para o serviço de upload.
 
+        Args:
+            flask_request: Requisição Flask com os arquivos e dados do formulário.
+            company_id: ID da empresa.
+            storage_type: Tipo de armazenamento ('files' ou 'documents').
+            s3_aws: Cliente ou config do AWS S3.
+
+        Returns:
+            Tuple com dicionário de resposta e código HTTP.
+        """
         self.logger.info(f"{flask_request.remote_addr} - "
                          f"[{datetime.now().strftime('%d/%b/%Y %H:%M:%S')}]"
                          f" \"{flask_request.method} {flask_request.full_path}\"")
@@ -88,7 +100,7 @@ class UploadManager:
                 }, 400
 
         return self.upload_service.upload_and_save_files(
-            files, company_id, storage_type, required_fields, s3
+            files, company_id, storage_type, required_fields, s3_aws
         )
 
     def process_file_deletion(self, data: dict, company_id: int, storage_type: str):

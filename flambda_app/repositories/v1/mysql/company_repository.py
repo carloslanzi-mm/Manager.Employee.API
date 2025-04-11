@@ -65,7 +65,7 @@ class CompanyRepository(AbstractRepository):
 
         address.company_id = company_id
 
-        created, address_id = self.create_entity(address, "address", "id")
+        created, _ = self.create_entity(address, "address", "id")
 
         return created if created else False
 
@@ -185,27 +185,23 @@ class CompanyRepository(AbstractRepository):
         # Retorna False em caso de erro
         return updated
 
-    def get(self, value, key=None, where: dict = None, fields: list = None):
+    def get(self,
+            value: Any,
+            key: Optional[str] = None,
+            where: Optional[dict] = None,
+            selected_fields: Optional[List[str]] = None
+            ) -> Optional[CompanyVO]:
         """
         Obtém um registro de empresa no banco de dados.
 
-        Este método consulta a tabela de empresas e retorna um registro específico baseado no valor
-        de uma chave e nos filtros fornecidos, se houver.
-
         Args:
-            value (Any): Valor da chave de busca para localizar o registro.
-            key (str, optional): Nome do campo utilizado como chave para a consulta. Caso não seja
-            informado, será utilizada a chave primária (`PK`).
-            where (dict, optional): Dicionário de condições adicionais para a cláusula WHERE.
-            fields (list, optional): Lista de campos específicos a serem retornados.
-            Se não informado, todos os campos são retornados.
+            value (Any): Valor da chave de busca.
+            key (str, optional): Campo usado como chave (default: chave primária).
+            where (dict, optional): Filtros adicionais para o WHERE.
+            selected_fields (list[str], optional): Campos a retornar (default: '*').
 
         Returns:
-            CompanyVO | None: Retorna um objeto `CompanyVO` com os dados da empresa se encontrado,
-                               ou `None` se não encontrado ou em caso de erro.
-
-        Raises:
-            Exception: Captura e registra qualquer erro ocorrido durante a consulta.
+            CompanyVO | None: Objeto empresa encontrado, ou None.
         """
         key_type = '%s'
         if key is None:
@@ -214,10 +210,10 @@ class CompanyRepository(AbstractRepository):
         if where is None:
             where = dict()
 
-        if fields is None or len(fields) == 0:
+        if selected_fields is None or len(selected_fields) == 0:
             fields = '*'
         else:
-            fields = [self.BASE_TABLE_ALIAS + '.' + val for val in fields]
+            fields = [self.BASE_TABLE_ALIAS + '.' + val for val in selected_fields]
             fields = ",".join(fields)
 
         sql = "SELECT {} FROM {} as {} WHERE {} = {}".format(
@@ -331,31 +327,34 @@ class CompanyRepository(AbstractRepository):
         """
         where_list = []
 
-        for k, v in where.items():
+        for key, value in where.items():
             # Verifica se é operador especial com "__"
-            if '__' in k:
-                field, op = k.split('__', 1)
+            if '__' in key:
+                field, operator = key.split('__', 1)
                 column = f"{self.BASE_TABLE_ALIAS}.{field}"
-                if op == 'like':
-                    where_list.append(f"{column} LIKE '%{v}%'")
-                elif op == 'gt':
-                    where_list.append(f"{column} > {v}")
-                elif op == 'lt':
-                    where_list.append(f"{column} < {v}")
-                elif op == 'gte':
-                    where_list.append(f"{column} >= {v}")
-                elif op == 'lte':
-                    where_list.append(f"{column} <= {v}")
-                elif op == 'ne':
-                    where_list.append(
-                        f"{column} != '{v}'" if isinstance(v, str) else f"{column} != {v}")
+                if operator == 'like':
+                    where_list.append(f"{column} LIKE '%{value}%'")
+                elif operator == 'gt':
+                    where_list.append(f"{column} > {value}")
+                elif operator == 'lt':
+                    where_list.append(f"{column} < {value}")
+                elif operator == 'gte':
+                    where_list.append(f"{column} >= {value}")
+                elif operator == 'lte':
+                    where_list.append(f"{column} <= {value}")
+                elif operator == 'ne':
+                    if isinstance(value, str):
+                        where_list.append(f"{column} != '{value}'")
+                    else:
+                        where_list.append(f"{column} != {value}")
             else:
-                column = f"{self.BASE_TABLE_ALIAS}.{k}"
-                if v is None:
+                column = f"{self.BASE_TABLE_ALIAS}.{key}"
+                if value is None:
                     where_list.append(f"{column} IS NULL")
+                elif isinstance(value, str):
+                    where_list.append(f"{column} = '{value}'")
                 else:
-                    where_list.append(
-                        f"{column} = '{v}'" if isinstance(v, str) else f"{column} = {v}")
+                    where_list.append(f"{column} = {value}")
 
         return " AND ".join(where_list)
 

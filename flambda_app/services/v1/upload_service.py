@@ -2,15 +2,12 @@
 Módulo responsável por gerenciar operações relacionadas a empresas.
 """
 import os
-from typing import Union, List, NoReturn, Optional
+from typing import Optional, Tuple, List
 from uuid import uuid4
 
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector
-from flambda_app.enums.messages import MessagesEnum
-from flambda_app.helper import get_function_name
 from flambda_app.logging import get_logger
-from flambda_app.exceptions import DatabaseException, ValidationException, ServiceException
 from flambda_app.vos.document import Document
 from flambda_app.vos.file import File
 
@@ -68,30 +65,61 @@ class UploadService:
         if self.REDIS_ENABLED:
             self.redis_upload_repository.debug = self.debug_mode
 
-    def upload_and_save_files(self, files, company_id, storage_type, required_fields, s3):
-        EntityClass = File if storage_type == 'files' else Document
+    @staticmethod
+    def _upload_single_file(file, bucket_name: str, s3_aws) -> Optional[Tuple[str, str]]:
+        """
+        Faz upload de um único arquivo para o S3 e retorna nome e URL pública.
+
+        Returns:
+            Tuple (nome do arquivo, URL pública) ou None em caso de falha.
+        """
+        original_name, extension = os.path.splitext(file.filename)
+        object_name = f"{original_name}_{str(uuid4())}{extension}"
+        response = s3_aws.upload_filedata(bucket_name, file, object_name)
+
+        if response is None:
+            return None
+
+        file_url = s3_aws.get_public_url(bucket_name, object_name)
+        return object_name, file_url
+
+    def _rollback_uploaded_files(self, object_names: List[str], bucket_name: str, s3_aws) -> None:
+        """
+        Remove arquivos do S3 em caso de erro no processo de upload.
+        """
+        for obj in object_names:
+            try:
+                s3_aws.delete_object(bucket_name, obj)
+            except (OSError, RuntimeError) as err:
+                self.logger.error(f"Erro ao remover {obj} no rollback: {err}")
+
+    def upload_and_save_files(self, files, company_id: int, storage_type: str,
+                              required_fields: dict, s3_aws) -> Tuple[dict, int]:
+        """
+        Faz o upload de arquivos para o S3 e salva os metadados no banco de dados.
+
+        Args:
+            files: Lista de arquivos enviados via formulário.
+            company_id (int): ID da empresa relacionada aos arquivos.
+            storage_type (str): Tipo de armazenamento ('files' ou 'documents').
+            required_fields (dict): Campos obrigatórios.
+            s3_aws: Cliente S3 com métodos de upload, deleção e geração de URL pública.
+        """
+        entity_class = File if storage_type == 'files' else Document
         table = 'files' if storage_type == 'files' else 'documents'
         bucket_name = os.getenv("APP_BUCKET")
 
-        database_entries = []
         uploaded = []
+        database_entries = []
 
         for idx, file in enumerate(files):
-            original_name, extension = os.path.splitext(file.filename)
-            object_name = f"{original_name}_{str(uuid4())}{extension}"
-            response = s3.upload_filedata(bucket_name, file, object_name)
-
-            if response is not None:
-                uploaded.append(object_name)
-            else:
-                for obj in uploaded:
-                    try:
-                        s3.delete_object(bucket_name, obj)
-                    except Exception as err:
-                        self.logger.error(f"Erro ao remover {obj} no rollback: {err}")
+            upload_result = self._upload_single_file(file, bucket_name, s3_aws)
+            if upload_result is None:
+                self._rollback_uploaded_files(uploaded, bucket_name, s3_aws)
                 return {'error': 'Erro ao enviar os arquivos. Nenhum foi salvo.'}, 500
 
-            file_url = s3.get_public_url(bucket_name, object_name)
+            object_name, file_url = upload_result
+            uploaded.append(object_name)
 
             entity_kwargs = {
                 'company_id': company_id,
@@ -106,7 +134,7 @@ class UploadService:
                     'ended_at': required_fields['ended_at'][idx],
                 })
 
-            entity = EntityClass(**entity_kwargs)
+            entity = entity_class(**entity_kwargs)
             success, file_id = self.company_repository.create_entity(entity, table, 'id')
 
             if success:
@@ -120,7 +148,15 @@ class UploadService:
         }, 200
 
     def delete_uploaded_files(self, ids: list, company_id: int, storage_type: str):
-        EntityClass = File if storage_type == 'files' else Document
+        """
+        Deleta arquivos associados a uma empresa com base no tipo de armazenamento e IDs fornecidos.
+
+        Args:
+            ids (list): Lista de IDs dos arquivos a serem deletados.
+            company_id (int): ID da empresa dona dos arquivos.
+            storage_type (str): Tipo de armazenamento ('files' ou 'documents').
+        """
+        entity_class = File if storage_type == 'files' else Document
         table = 'files' if storage_type == 'files' else 'documents'
 
         company_repo = CompanyRepository()
@@ -129,7 +165,7 @@ class UploadService:
         for file_id in ids:
             entity = company_repo.get_entity(
                 table_name=table,
-                vo_class=EntityClass,
+                vo_class=entity_class,
                 value=file_id,
                 where={"deleted_at": None}
             )
@@ -137,11 +173,11 @@ class UploadService:
             if not entity or entity.company_id != company_id:
                 continue
 
-            try:
-                company_repo.delete_entity(table, "id", file_id)
+            success = company_repo.delete_entity(table, "id", file_id)
+            if success:
                 deleted_files.append({"id": file_id, "name": entity.name})
-            except Exception as err:
-                self.logger.error(f"Erro ao deletar arquivo id={file_id} nome={entity.name}: {err}")
+            else:
+                self.logger.error(f"Erro ao deletar arquivo id={file_id} nome={entity.name}")
 
         if not deleted_files:
             return {'error': 'Nenhum arquivo foi deletado.'}, 404
@@ -150,4 +186,3 @@ class UploadService:
             'mensagem': f'{len(deleted_files)} arquivo(s) deletado(s) com sucesso!',
             'arquivos': deleted_files
         }, 200
-

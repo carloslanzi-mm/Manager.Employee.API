@@ -1,7 +1,10 @@
+"""
+    Módulo contendo os objetos relacionados a relatórios e tipos de relatório.
+"""
+
 from datetime import datetime
 from typing import Dict, Optional, Any
-from .base import Base
-
+from flambda_app.vos.base import Base
 from flambda_app.repositories.v1.mysql.report_repository import ReportRepository
 
 
@@ -28,6 +31,9 @@ class Report(Base):
                  deleted_at: Optional[str] = None,
                  **kwargs: Any
                  ):
+        """
+        Inicializa uma instância de Report.
+        """
 
         self.id = report_id
         self.report_type_id = report_type_id
@@ -43,12 +49,14 @@ class Report(Base):
 
     def __str__(self):
         """
-        String representation of the Report instance.
+        Retorna uma string representando o relatório.
         """
         return f"Report(id={self.id}, status={self.status}"
 
     def get_report_type_name(self) -> Optional[str]:
-        """Busca o nome da empresa usando CompanyService se não estiver no dicionário."""
+        """
+        Retorna o nome do tipo de relatório, se existir.
+        """
         if not self.report_type_id:
             return None
 
@@ -63,7 +71,7 @@ class Report(Base):
 
     def to_dict(self) -> Dict[str, Optional[str]]:
         """
-        Converts the Report to a dictionary.
+        Retorna o relatório como dicionário.
         """
         return {
             'id': self.id,
@@ -76,6 +84,9 @@ class Report(Base):
         }
 
     def to_api_response(self) -> Dict[str, str]:
+        """
+        Retorna o relatório formatado para resposta da API.
+        """
         return {
             'id': self.id,
             'url': self.url,
@@ -106,6 +117,9 @@ class ReportType(Base):
                  deleted_at: Optional[str] = None,
                  **kwargs: Any
                  ):
+        """
+        Inicializa uma instância de ReportType.
+        """
 
         self.id = report_type_id
         self.name = name
@@ -119,13 +133,13 @@ class ReportType(Base):
 
     def __str__(self):
         """
-        String representation of the ReportType instance.
+        Retorna uma string representando o tipo de relatório.
         """
         return f"ReportType(id={self.id}, name={self.name})"
 
     def to_dict(self) -> Dict[str, Optional[str]]:
         """
-        Converts the ReportType to a dictionary.
+        Retorna o tipo de relatório como dicionário.
         """
         return {
             'id': self.id,
@@ -137,7 +151,7 @@ class ReportType(Base):
 
     def to_api_response(self) -> Dict[str, str]:
         """
-        Converts the ReportType to a dictionary for API responses.
+        Retorna o tipo de relatório formatado para resposta da API.
         """
         return {
             'id': self.id,

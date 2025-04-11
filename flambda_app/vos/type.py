@@ -1,4 +1,4 @@
-from .base import Base
+from flambda_app.vos.base import Base
 from datetime import datetime
 from typing import Any, Dict, Optional
 

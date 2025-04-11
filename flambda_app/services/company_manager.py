@@ -78,7 +78,7 @@ class CompanyManager:
 
         :param request: Objeto da requisição contendo dados do query string e do body.
         :return: Lista de instâncias de `CompanyVO` ou dicionários representando empresas.
-        :raises ValidationException ou outra exceção propagada pela `company_service`, se houver erro.
+        :raises ValidationException ou outra exceção propagada pela company_service se houver erro.
         """
 
         request_data = request.to_dict()

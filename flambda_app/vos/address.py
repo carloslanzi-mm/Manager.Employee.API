@@ -1,11 +1,15 @@
+"""
+Módulo que define o Object Address, representando um endereço vinculado a uma empresa.
+"""
+
 from datetime import datetime
 from typing import Optional, Dict, Any
-from .base import Base
+from flambda_app.vos.base import Base
 
 
 class Address(Base):
     """
-    Value Object para representar um endereço.
+    Object para representar um endereço.
     """
     update_allowed_fields = ["street", "number", "neighbor", "zip_code", "updated_at",
                              "deleted_at"]
@@ -32,6 +36,10 @@ class Address(Base):
                  company_id: Optional[int] = None,
                  **kwargs: Any
                  ):
+        """
+        Inicializa uma instância de Address com os campos fornecidos.
+        """
+
         self.id = address_id
         self.street = street
         self.number = number
@@ -47,12 +55,18 @@ class Address(Base):
                 setattr(self, key, value)
 
     def __str__(self):
+        """
+        Retorna a representação em string do endereço.
+        """
         return f"AddressVO(id={self.id}, street={self.street}, number={self.number}, " \
                f"neighbor={self.neighbor}, zip_code={self.zip_code}, " \
                f"company_id={self.company_id}, created_at={self.created_at}, " \
                f"updated_at={self.updated_at}, deleted_at={self.deleted_at})"
 
     def to_dict(self) -> Dict[str, Optional[str]]:
+        """
+        Converte o endereço para um dicionário completo, incluindo metadados.
+        """
         return {
             'id': self.id,
             'street': self.street,
@@ -66,6 +80,9 @@ class Address(Base):
         }
 
     def to_api_response(self) -> Dict[str, Optional[str]]:
+        """
+        Converte o endereço para um dicionário simplificado para resposta de API.
+        """
         return {
             "id": self.id,
             "street": self.street,

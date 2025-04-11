@@ -2,7 +2,7 @@
 Módulo responsável por gerenciar operações relacionadas a empresas.
 """
 
-from typing import Union, List, Optional
+from typing import Union, List
 
 from flambda_app.config import get_config
 from flambda_app.logging import get_logger

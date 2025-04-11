@@ -6,6 +6,12 @@ from flambda_app.repositories.v1.mysql import AbstractRepository
 
 
 class FilesDocumentRepository(AbstractRepository):
+    """
+    Repositório responsável pelas operações com as tabelas `files` e `document`.
+
+    Herda de `AbstractRepository` e provê métodos de persistência específicos
+    para arquivos e documentos vinculados.
+    """
 
     def __init__(self, logger=None, mysql_connection=None):
         """

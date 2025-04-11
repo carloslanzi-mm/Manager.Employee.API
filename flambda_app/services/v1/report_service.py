@@ -2,7 +2,7 @@
 Módulo responsável por gerenciar operações relacionadas ao report.
 """
 
-from typing import Union, List, Optional
+from typing import Union, List
 
 from flambda_app.database.mysql import MySQLConnector
 from flambda_app.database.redis import RedisConnector

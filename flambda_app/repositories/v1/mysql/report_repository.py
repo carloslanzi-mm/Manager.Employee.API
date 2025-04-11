@@ -29,20 +29,20 @@ class ReportRepository(AbstractRepository):
              base_table: str = None,
              base_table_alias: str = None):
         """
-        Lista registros no banco de dados com filtros, ordenação e paginação.
+        Retorna registros do banco com suporte a filtros, ordenação e paginação.
 
         Args:
-            where (dict): Dicionário de condições adicionais para a cláusula WHERE.
-            offset (int, optional): Número de registros a serem ignorados antes de iniciar a consulta (paginação).
-            limit (int, optional): Número máximo de registros a serem retornados.
-            fields (list, optional): Lista de campos específicos a serem retornados.
-            sort_by (str | list, optional): Campo(s) para ordenar os resultados. Se não informado, será utilizado 'id'.
-            order_by (str, optional): Direção da ordenação, pode ser "ASC" ou "DESC". O padrão é "ASC".
-            base_table (str, optional): Nome da tabela base a ser usada. Se não informado, usa self.BASE_TABLE.
-            base_table_alias (str, optional): Alias da tabela base. Se não informado, usa self.BASE_TABLE_ALIAS.
+            where (dict): Condições para o filtro.
+            offset (int): Quantidade de registros a ignorar (paginação).
+            limit (int): Máximo de registros a retornar.
+            fields (list): Campos específicos a retornar.
+            sort_by (str | list): Campo(s) para ordenação. Padrão: 'id'.
+            order_by (str): Direção da ordenação ("ASC" ou "DESC"). Padrão: "ASC".
+            base_table (str): Nome da tabela base. Padrão: `self.BASE_TABLE`.
+            base_table_alias (str): Alias da tabela base. Padrão: `self.BASE_TABLE_ALIAS`.
 
         Returns:
-            list: Lista de dicionários com os registros encontrados, ou `None` em caso de erro.
+            list | None: Lista de registros ou `None` em caso de erro.
         """
         table = base_table or self.BASE_TABLE
         alias = base_table_alias or self.BASE_TABLE_ALIAS
@@ -68,7 +68,7 @@ class ReportRepository(AbstractRepository):
 
         values = []
         if where:
-            where_str, values = self.build_where(where, alias=alias)
+            where_str, values = self.build_where(where)
             sql += f" WHERE {where_str}"
 
         sql += f" ORDER BY {sort_by} {order_by}"
@@ -102,18 +102,19 @@ class ReportRepository(AbstractRepository):
               base_table: str = None,
               base_table_alias: str = None):
         """
-        Conta o número total de registros na tabela com base nas condições fornecidas.
+        Conta registros na tabela com base nos filtros.
 
         Args:
-            where (dict): Dicionário de condições para a cláusula WHERE.
-            sort_by (str | list, opcional): Campo(s) para ordenar os resultados.
-            order_by (str, opcional): Direção da ordenação, pode ser 'ASC' ou 'DESC'.
-            base_table (str, opcional): Nome da tabela base. Se não informado, usa self.BASE_TABLE.
-            base_table_alias (str, opcional): Alias da tabela base. Se não informado, usa self.BASE_TABLE_ALIAS.
+            where (dict): Filtros para a cláusula WHERE.
+            sort_by (str | list): Campo(s) para ordenação.
+            order_by (str): Direção da ordenação ('ASC' ou 'DESC').
+            base_table (str): Nome da tabela base. Padrão: `self.BASE_TABLE`.
+            base_table_alias (str): Alias da tabela. Padrão: `self.BASE_TABLE_ALIAS`.
 
         Returns:
-            int: O número total de registros que atendem às condições fornecidas.
+            int: Total de registros encontrados.
         """
+
         table = base_table or self.BASE_TABLE
         alias = base_table_alias or self.BASE_TABLE_ALIAS
 
@@ -132,7 +133,7 @@ class ReportRepository(AbstractRepository):
 
         values = []
         if where:
-            where_str, values = self.build_where(where, alias=alias)
+            where_str, values = self.build_where(where)
             sql += f" WHERE {where_str}"
 
         sql += f" ORDER BY {sort_by} {order_by}"
@@ -153,6 +154,16 @@ class ReportRepository(AbstractRepository):
         return result
 
     def list_entity_report(self, company_ids: Optional[List[int]] = None) -> List[Dict[str, Any]]:
+        """
+        Gera um relatório com dados da empresa, endereço, documentos e arquivos.
+
+        Args:
+            company_ids (List[int], opcional): Lista de IDs das empresas a serem filtradas.
+
+        Returns:
+            List[Dict[str, Any]]: Lista de registros formatados para o relatório.
+        """
+
         sql = """
             SELECT
                 c.name AS nome_empresa,
@@ -199,9 +210,9 @@ class ReportRepository(AbstractRepository):
             rows = result.fetchall()
             return rows or []
 
-        except Exception as e:
-            self.logger.error(f"[list_entity_report] Erro ao buscar relatório: {e}")
-            self._exception = e
+        except Exception as err:
+            self.logger.error(f"[list_entity_report] Erro ao buscar relatório: {err}")
+            self._exception = err
             return []
 
         finally:
